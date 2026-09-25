@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { db, getDbInitError } from '../db/client';
 import { seedCategories } from '../db/seed';
 import migrations from '../drizzle/migrations';
-import { COLORS } from '../lib/constants';
+import { colors } from '@/components/ui';
 
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
   const isSharedArrayBufferError = error.message?.includes('SharedArrayBuffer');
@@ -76,7 +76,7 @@ function RootLayoutContent() {
   if (!success || !seeded) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -87,7 +87,7 @@ function RootLayoutContent() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: COLORS.bg },
+          contentStyle: { backgroundColor: colors.bg },
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -122,25 +122,25 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.bg,
+    backgroundColor: colors.bg,
     padding: 24,
   },
   errorTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: COLORS.ink,
+    color: colors.ink,
     marginBottom: 8,
     textAlign: 'center',
   },
   errorText: {
-    color: COLORS.red,
+    color: colors.red,
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 18,
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 10,
     borderCurve: 'continuous',
     paddingVertical: 10,
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   retryText: {
-    color: COLORS.white,
+    color: colors.white,
     fontWeight: '700',
     fontSize: 13,
   },

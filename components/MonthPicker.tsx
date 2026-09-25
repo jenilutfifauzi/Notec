@@ -1,8 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../lib/constants';
 import { monthYearFormatter } from '../lib/format';
+import { colors, radii } from '@/components/ui';
 
 interface MonthPickerProps {
   year: number;
@@ -14,6 +14,7 @@ interface MonthPickerProps {
   hasCustomFilter?: boolean;
   onClearCustomFilter?: () => void;
 }
+
 export function MonthPicker({
   year,
   month,
@@ -57,7 +58,7 @@ export function MonthPicker({
         <Ionicons
           name="chevron-back"
           size={18}
-          color={isHero ? COLORS.white : '#758cb6'}
+          color={isHero ? colors.white : colors.iconMuted}
         />
       </Pressable>
 
@@ -84,7 +85,7 @@ export function MonthPicker({
           <Ionicons
             name="chevron-down"
             size={13}
-            color={hasCustomFilter ? COLORS.primary : isHero ? COLORS.white : '#758cb6'}
+            color={hasCustomFilter ? colors.primary : isHero ? colors.white : colors.iconMuted}
           />
         </Pressable>
       ) : (
@@ -101,7 +102,7 @@ export function MonthPicker({
           accessibilityLabel="Hapus filter tanggal"
           accessibilityRole="button"
         >
-          <Ionicons name="close-circle" size={16} color={COLORS.muted} />
+          <Ionicons name="close-circle" size={16} color={colors.muted} />
         </Pressable>
       ) : null}
 
@@ -115,7 +116,7 @@ export function MonthPicker({
         <Ionicons
           name="chevron-forward"
           size={18}
-          color={isHero ? COLORS.white : '#758cb6'}
+          color={isHero ? colors.white : colors.iconMuted}
         />
       </Pressable>
     </View>
@@ -132,8 +133,8 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderWidth: 1,
-    borderColor: '#bdd0ff',
-    borderRadius: 24,
+    borderColor: colors.borderHighlight,
+    borderRadius: radii['5xl'],
     borderCurve: 'continuous',
     paddingVertical: 4,
     paddingHorizontal: 6,
@@ -146,7 +147,7 @@ const styles = StyleSheet.create({
   },
   arrowButton: {
     padding: 6,
-    borderRadius: 8,
+    borderRadius: radii.sm,
   },
   titleButton: {
     flexDirection: 'row',
@@ -154,13 +155,13 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 4,
     paddingHorizontal: 8,
-    borderRadius: 16,
+    borderRadius: radii['2xl'],
   },
   titleButtonActive: {
-    backgroundColor: COLORS.pale,
+    backgroundColor: colors.primaryPale,
   },
   customFilterText: {
-    color: COLORS.primary,
+    color: colors.primary,
   },
   clearBtn: {
     padding: 4,
@@ -170,11 +171,11 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   heroText: {
-    color: COLORS.white,
+    color: colors.white,
     fontSize: 12,
   },
   lightText: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 14,
   },
 });

@@ -6,9 +6,9 @@ import {
   StyleSheet,
   Pressable,
 } from 'react-native';
-import { COLORS } from '../lib/constants';
+import { colors, radii, spacing, typography, Button } from '@/components/ui';
 
-interface ConfirmDialogProps {
+export interface ConfirmDialogProps {
   visible: boolean;
   title: string;
   message: string;
@@ -36,33 +36,30 @@ export function ConfirmDialog({
       animationType="fade"
       onRequestClose={onCancel}
     >
-      <View style={styles.overlay}>
-        <View style={styles.dialog}>
+      <Pressable style={styles.overlay} onPress={onCancel}>
+        <Pressable style={styles.dialog} onPress={(e) => e.stopPropagation()}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
 
           <View style={styles.actionRow}>
-            <Pressable
-              style={styles.cancelButton}
+            <Button
+              title={cancelText}
               onPress={onCancel}
-              accessibilityRole="button"
-            >
-              <Text style={styles.cancelText}>{cancelText}</Text>
-            </Pressable>
+              variant="outline"
+              size="md"
+              style={styles.flexBtn}
+            />
 
-            <Pressable
-              style={[
-                styles.confirmButton,
-                destructive ? styles.destructiveButton : styles.primaryButton,
-              ]}
+            <Button
+              title={confirmText}
               onPress={onConfirm}
-              accessibilityRole="button"
-            >
-              <Text style={styles.confirmText}>{confirmText}</Text>
-            </Pressable>
+              variant={destructive ? 'destructive' : 'primary'}
+              size="md"
+              style={styles.flexBtn}
+            />
           </View>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }
@@ -70,69 +67,38 @@ export function ConfirmDialog({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(28, 44, 75, 0.55)',
+    backgroundColor: colors.overlayDark,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: spacing['12'],
   },
   dialog: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: COLORS.white,
-    borderRadius: 18,
+    backgroundColor: colors.white,
+    borderRadius: radii['3xl'],
     borderCurve: 'continuous',
-    padding: 22,
+    padding: spacing['11'],
     boxShadow: '0 20px 40px rgba(28, 44, 75, 0.25)',
     elevation: 6,
   },
   title: {
+    ...typography.title,
     fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.ink,
-    marginBottom: 8,
+    color: colors.ink,
+    marginBottom: spacing['4'],
   },
   message: {
     fontSize: 13,
-    color: '#64748b',
+    color: colors.subtle,
     lineHeight: 19,
-    marginBottom: 20,
+    marginBottom: spacing['10'],
   },
   actionRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: spacing['5'],
   },
-  cancelButton: {
+  flexBtn: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: '#d2def4',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-  confirmButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryButton: {
-    backgroundColor: COLORS.primary,
-  },
-  destructiveButton: {
-    backgroundColor: COLORS.red,
-  },
-  confirmText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.white,
   },
 });

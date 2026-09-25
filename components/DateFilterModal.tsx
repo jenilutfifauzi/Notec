@@ -1,17 +1,23 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  Modal,
   View,
   Text,
   StyleSheet,
   Pressable,
-  ScrollView,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { COLORS } from '../lib/constants';
 import { formatDateShort } from '../lib/format';
+import {
+  colors,
+  radii,
+  spacing,
+  typography,
+  BottomSheetModal,
+  Chip,
+  Button,
+} from '@/components/ui';
 
 export type DatePresetKey = 'today' | '7days' | '30days' | 'thisMonth' | 'lastMonth' | 'custom';
 
@@ -56,8 +62,8 @@ function toDateString(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-function parseDateString(str: string): Date {
-  const [y, m, d] = str.split('-').map(Number);
+function parseDateString(s: string): Date {
+  const [y, m, d] = s.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
 
@@ -72,35 +78,32 @@ export function DateFilterModal({
   onApply,
   onReset,
 }: DateFilterModalProps) {
-  const now = useMemo(() => new Date(), []);
+  const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
 
-  // Local draft state
+  const [draftPreset, setDraftPreset] = useState<DatePresetKey | undefined>(presetKey);
   const [draftYear, setDraftYear] = useState<number>(year);
   const [draftMonth, setDraftMonth] = useState<number>(month);
   const [draftFrom, setDraftFrom] = useState<string | null>(dateFrom);
   const [draftTo, setDraftTo] = useState<string | null>(dateTo);
-  const [draftPreset, setDraftPreset] = useState<DatePresetKey | undefined>(presetKey);
-
-  // Picker modal / sheet for iOS and Android
   const [pickerTarget, setPickerTarget] = useState<'from' | 'to' | null>(null);
 
-  // Synchronize state when modal becomes visible
   useEffect(() => {
     if (visible) {
+      setDraftPreset(presetKey);
       setDraftYear(year);
       setDraftMonth(month);
       setDraftFrom(dateFrom);
       setDraftTo(dateTo);
-      setDraftPreset(presetKey);
       setPickerTarget(null);
     }
   }, [visible, year, month, dateFrom, dateTo, presetKey]);
 
-  // Handle Preset selection
-  const handleSelectPreset = useCallback((key: DatePresetKey) => {
+  const handleSelectPreset = (key: DatePresetKey) => {
     setDraftPreset(key);
+    setPickerTarget(null);
+
     const today = new Date();
     const todayStr = toDateString(today);
 
@@ -113,9 +116,9 @@ export function DateFilterModal({
         break;
 
       case '7days': {
-        const start = new Date(today);
-        start.setDate(start.getDate() - 6);
-        setDraftFrom(toDateString(start));
+        const d = new Date(today);
+        d.setDate(d.getDate() - 6);
+        setDraftFrom(toDateString(d));
         setDraftTo(todayStr);
         setDraftYear(today.getFullYear());
         setDraftMonth(today.getMonth() + 1);
@@ -123,94 +126,87 @@ export function DateFilterModal({
       }
 
       case '30days': {
-        const start = new Date(today);
-        start.setDate(start.getDate() - 29);
-        setDraftFrom(toDateString(start));
+        const d = new Date(today);
+        d.setDate(d.getDate() - 29);
+        setDraftFrom(toDateString(d));
         setDraftTo(todayStr);
         setDraftYear(today.getFullYear());
         setDraftMonth(today.getMonth() + 1);
         break;
       }
 
-      case 'thisMonth':
+      case 'thisMonth': {
+        const y = today.getFullYear();
+        const m = today.getMonth() + 1;
+        setDraftYear(y);
+        setDraftMonth(m);
         setDraftFrom(null);
         setDraftTo(null);
-        setDraftYear(currentYear);
-        setDraftMonth(currentMonth);
         break;
+      }
 
       case 'lastMonth': {
+        let y = today.getFullYear();
+        let m = today.getMonth();
+        if (m === 0) {
+          m = 12;
+          y -= 1;
+        }
+        setDraftYear(y);
+        setDraftMonth(m);
         setDraftFrom(null);
         setDraftTo(null);
-        if (currentMonth === 1) {
-          setDraftYear(currentYear - 1);
-          setDraftMonth(12);
-        } else {
-          setDraftYear(currentYear);
-          setDraftMonth(currentMonth - 1);
-        }
         break;
       }
     }
-  }, [currentYear, currentMonth]);
+  };
 
-  // Handle Month Grid selection
-  const handleSelectMonth = useCallback((mIndex: number) => {
-    const selectedM = mIndex + 1;
-    setDraftMonth(selectedM);
+  const handleSelectMonth = (monthIndex: number) => {
+    setDraftMonth(monthIndex + 1);
     setDraftFrom(null);
     setDraftTo(null);
+    setDraftPreset(undefined);
+    setPickerTarget(null);
+  };
 
-    if (draftYear === currentYear && selectedM === currentMonth) {
-      setDraftPreset('thisMonth');
-    } else {
-      setDraftPreset(undefined);
-    }
-  }, [draftYear, currentYear, currentMonth]);
-
-  // Handle Year Change
   const handlePrevYear = () => {
-    setDraftYear((prev) => prev - 1);
+    setDraftYear((y) => y - 1);
+    setDraftFrom(null);
+    setDraftTo(null);
     setDraftPreset(undefined);
   };
 
   const handleNextYear = () => {
-    setDraftYear((prev) => prev + 1);
+    setDraftYear((y) => y + 1);
+    setDraftFrom(null);
+    setDraftTo(null);
     setDraftPreset(undefined);
   };
 
-  // DateTimePicker change handler
-  const handlePickerChange = (event: DateTimePickerEvent, selected?: Date) => {
+  const handlePickerChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     if (Platform.OS === 'android') {
       setPickerTarget(null);
     }
-    if (event.type === 'dismissed' || !selected) {
+    if (event.type === 'dismissed' || !selectedDate) {
       return;
     }
 
-    const dateStr = toDateString(selected);
+    const dateStr = toDateString(selectedDate);
     setDraftPreset('custom');
 
     if (pickerTarget === 'from') {
       setDraftFrom(dateStr);
-      // Auto-adjust 'to' date if 'to' is earlier than 'from'
-      if (draftTo && draftTo < dateStr) {
+      if (draftTo && dateStr > draftTo) {
         setDraftTo(dateStr);
-      }
-      if (Platform.OS === 'android') {
-        // Automatically prompt for End Date on Android for seamless 2-step flow
-        setTimeout(() => setPickerTarget('to'), 150);
       }
     } else if (pickerTarget === 'to') {
       setDraftTo(dateStr);
-      // Auto-adjust 'from' date if 'from' is later than 'to'
-      if (draftFrom && draftFrom > dateStr) {
+      if (draftFrom && dateStr < draftFrom) {
         setDraftFrom(dateStr);
       }
     }
   };
 
-  // Apply Action
   const handleApply = () => {
     onApply({
       year: draftYear,
@@ -222,7 +218,6 @@ export function DateFilterModal({
     onClose();
   };
 
-  // Reset Action
   const handleReset = () => {
     onReset();
     onClose();
@@ -239,350 +234,224 @@ export function DateFilterModal({
   }, [pickerTarget, draftFrom, draftTo]);
 
   return (
-    <Modal
+    <BottomSheetModal
       visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
+      onClose={onClose}
+      title="Pilih Periode Riwayat"
+      subtitle="Filter transaksi berdasarkan tanggal atau bulan"
+      footer={
+        <View style={styles.footer}>
+          <Button
+            title="Reset"
+            onPress={handleReset}
+            variant="outline"
+            style={styles.resetBtn}
+          />
+          <Button
+            title="Terapkan Filter"
+            onPress={handleApply}
+            variant="primary"
+            style={styles.applyBtn}
+          />
+        </View>
+      }
     >
-      <View style={styles.backdrop}>
-        <Pressable style={styles.backdropPressable} onPress={onClose} />
-        
-        <View style={styles.sheetContainer}>
-          {/* Top Drag Indicator */}
-          <View style={styles.dragHandleWrap}>
-            <View style={styles.dragHandle} />
-          </View>
+      {/* SECTION 1: Quick Presets */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>PILIHAN CEPAT</Text>
+        <View style={styles.presetsRow}>
+          {PRESETS.map((p) => {
+            const isSelected = draftPreset === p.key;
+            return (
+              <Chip
+                key={p.key}
+                label={p.label}
+                active={isSelected}
+                onPress={() => handleSelectPreset(p.key)}
+              />
+            );
+          })}
+        </View>
+      </View>
 
-          {/* Modal Header */}
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.title}>Pilih Periode Riwayat</Text>
-              <Text style={styles.subtitle}>Filter transaksi berdasarkan tanggal atau bulan</Text>
-            </View>
+      {/* SECTION 2: Month & Year Selector */}
+      <View style={styles.section}>
+        <View style={styles.monthHeaderRow}>
+          <Text style={styles.sectionLabel}>PILIH BULAN</Text>
+
+          {/* Year Navigation */}
+          <View style={styles.yearPickerWrap}>
             <Pressable
-              onPress={onClose}
-              style={styles.closeBtn}
+              onPress={handlePrevYear}
+              style={styles.yearArrowBtn}
               hitSlop={8}
               accessibilityRole="button"
-              accessibilityLabel="Tutup"
+              accessibilityLabel="Tahun sebelumnya"
             >
-              <Ionicons name="close" size={20} color={COLORS.muted} />
+              <Ionicons name="chevron-back" size={16} color={colors.ink} />
+            </Pressable>
+            <Text style={styles.yearText}>{draftYear}</Text>
+            <Pressable
+              onPress={handleNextYear}
+              style={styles.yearArrowBtn}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Tahun berikutnya"
+            >
+              <Ionicons name="chevron-forward" size={16} color={colors.ink} />
             </Pressable>
           </View>
+        </View>
 
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
+        {/* 12-Month Grid (4 columns x 3 rows) */}
+        <View style={styles.monthGrid}>
+          {MONTH_NAMES.map((name, idx) => {
+            const selected = draftFrom === null && draftTo === null && draftMonth === idx + 1;
+            const isCurrent = draftYear === currentYear && idx + 1 === currentMonth;
+
+            return (
+              <Pressable
+                key={name}
+                style={[
+                  styles.monthCell,
+                  selected ? styles.monthCellActive : null,
+                  !selected && isCurrent ? styles.monthCellCurrent : null,
+                ]}
+                onPress={() => handleSelectMonth(idx)}
+                accessibilityRole="button"
+              >
+                <Text
+                  style={[
+                    styles.monthCellText,
+                    selected ? styles.monthCellTextActive : null,
+                    !selected && isCurrent ? styles.monthCellTextCurrent : null,
+                  ]}
+                >
+                  {name}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* SECTION 3: Custom Date Range */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>ATAU RENTANG TANGGAL KUSTOM</Text>
+
+        <View style={styles.customRangeRow}>
+          {/* From Date Box */}
+          <Pressable
+            style={[
+              styles.dateBox,
+              draftPreset === 'custom' && draftFrom ? styles.dateBoxActive : null,
+            ]}
+            onPress={() => setPickerTarget('from')}
+            accessibilityRole="button"
           >
-            {/* SECTION 1: Quick Presets */}
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>PILIHAN CEPAT</Text>
-              <View style={styles.presetsRow}>
-                {PRESETS.map((p) => {
-                  const isSelected = draftPreset === p.key;
-                  return (
-                    <Pressable
-                      key={p.key}
-                      style={[styles.presetChip, isSelected ? styles.presetChipActive : null]}
-                      onPress={() => handleSelectPreset(p.key)}
-                      accessibilityRole="button"
-                    >
-                      <Text
-                        style={[
-                          styles.presetChipText,
-                          isSelected ? styles.presetChipTextActive : null,
-                        ]}
-                      >
-                        {p.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
+            <Text style={styles.dateBoxLabel}>Dari Tanggal</Text>
+            <View style={styles.dateBoxValueRow}>
+              <Ionicons
+                name="calendar-outline"
+                size={15}
+                color={draftFrom ? colors.primary : colors.muted}
+              />
+              <Text
+                style={[
+                  styles.dateBoxValue,
+                  draftFrom ? styles.dateBoxValueActive : null,
+                ]}
+              >
+                {draftFrom ? formatDateShort(draftFrom) : 'Pilih...'}
+              </Text>
             </View>
+          </Pressable>
 
-            {/* SECTION 2: Month & Year Selector */}
-            <View style={styles.section}>
-              <View style={styles.monthHeaderRow}>
-                <Text style={styles.sectionLabel}>PILIH BULAN</Text>
-                
-                {/* Year Navigation */}
-                <View style={styles.yearPickerWrap}>
-                  <Pressable
-                    onPress={handlePrevYear}
-                    style={styles.yearArrowBtn}
-                    hitSlop={8}
-                    accessibilityRole="button"
-                    accessibilityLabel="Tahun sebelumnya"
-                  >
-                    <Ionicons name="chevron-back" size={16} color={COLORS.ink} />
-                  </Pressable>
-                  <Text style={styles.yearText}>{draftYear}</Text>
-                  <Pressable
-                    onPress={handleNextYear}
-                    style={styles.yearArrowBtn}
-                    hitSlop={8}
-                    accessibilityRole="button"
-                    accessibilityLabel="Tahun berikutnya"
-                  >
-                    <Ionicons name="chevron-forward" size={16} color={COLORS.ink} />
-                  </Pressable>
-                </View>
-              </View>
+          <Ionicons name="arrow-forward" size={16} color={colors.muted} />
 
-              {/* 12-Month Grid (4 columns x 3 rows) */}
-              <View style={styles.monthGrid}>
-                {MONTH_NAMES.map((name, idx) => {
-                  const selected = draftFrom === null && draftTo === null && draftMonth === idx + 1;
-                  const isCurrent = draftYear === currentYear && idx + 1 === currentMonth;
-
-                  return (
-                    <Pressable
-                      key={name}
-                      style={[
-                        styles.monthCell,
-                        selected ? styles.monthCellActive : null,
-                        !selected && isCurrent ? styles.monthCellCurrent : null,
-                      ]}
-                      onPress={() => handleSelectMonth(idx)}
-                      accessibilityRole="button"
-                    >
-                      <Text
-                        style={[
-                          styles.monthCellText,
-                          selected ? styles.monthCellTextActive : null,
-                          !selected && isCurrent ? styles.monthCellTextCurrent : null,
-                        ]}
-                      >
-                        {name}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
+          {/* To Date Box */}
+          <Pressable
+            style={[
+              styles.dateBox,
+              draftPreset === 'custom' && draftTo ? styles.dateBoxActive : null,
+            ]}
+            onPress={() => setPickerTarget('to')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.dateBoxLabel}>Sampai Tanggal</Text>
+            <View style={styles.dateBoxValueRow}>
+              <Ionicons
+                name="calendar-outline"
+                size={15}
+                color={draftTo ? colors.primary : colors.muted}
+              />
+              <Text
+                style={[
+                  styles.dateBoxValue,
+                  draftTo ? styles.dateBoxValueActive : null,
+                ]}
+              >
+                {draftTo ? formatDateShort(draftTo) : 'Pilih...'}
+              </Text>
             </View>
+          </Pressable>
+        </View>
 
-            {/* SECTION 3: Custom Date Range */}
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>ATAU RENTANG TANGGAL KUSTOM</Text>
-              
-              <View style={styles.customRangeRow}>
-                {/* From Date Box */}
-                <Pressable
-                  style={[
-                    styles.dateBox,
-                    draftPreset === 'custom' && draftFrom ? styles.dateBoxActive : null,
-                  ]}
-                  onPress={() => setPickerTarget('from')}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.dateBoxLabel}>Dari Tanggal</Text>
-                  <View style={styles.dateBoxValueRow}>
-                    <Ionicons
-                      name="calendar-outline"
-                      size={15}
-                      color={draftFrom ? COLORS.primary : COLORS.muted}
-                    />
-                    <Text
-                      style={[
-                        styles.dateBoxValue,
-                        draftFrom ? styles.dateBoxValueActive : null,
-                      ]}
-                    >
-                      {draftFrom ? formatDateShort(draftFrom) : 'Pilih...'}
-                    </Text>
-                  </View>
-                </Pressable>
-
-                <Ionicons name="arrow-forward" size={16} color={COLORS.muted} />
-
-                {/* To Date Box */}
-                <Pressable
-                  style={[
-                    styles.dateBox,
-                    draftPreset === 'custom' && draftTo ? styles.dateBoxActive : null,
-                  ]}
-                  onPress={() => setPickerTarget('to')}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.dateBoxLabel}>Sampai Tanggal</Text>
-                  <View style={styles.dateBoxValueRow}>
-                    <Ionicons
-                      name="calendar-outline"
-                      size={15}
-                      color={draftTo ? COLORS.primary : COLORS.muted}
-                    />
-                    <Text
-                      style={[
-                        styles.dateBoxValue,
-                        draftTo ? styles.dateBoxValueActive : null,
-                      ]}
-                    >
-                      {draftTo ? formatDateShort(draftTo) : 'Pilih...'}
-                    </Text>
-                  </View>
-                </Pressable>
-              </View>
-
-              {/* iOS Inline DateTimePicker Container */}
-              {Platform.OS === 'ios' && pickerTarget ? (
-                <View style={styles.iosPickerCard}>
-                  <View style={styles.iosPickerHeader}>
-                    <Text style={styles.iosPickerTitle}>
-                      {pickerTarget === 'from' ? 'Pilih Dari Tanggal' : 'Pilih Sampai Tanggal'}
-                    </Text>
-                    <Pressable
-                      onPress={() => setPickerTarget(null)}
-                      style={styles.iosPickerDoneBtn}
-                      hitSlop={8}
-                    >
-                      <Text style={styles.iosPickerDoneText}>Selesai</Text>
-                    </Pressable>
-                  </View>
-                  <DateTimePicker
-                    value={activePickerDate}
-                    mode="date"
-                    display="spinner"
-                    onChange={handlePickerChange}
-                    maximumDate={pickerTarget === 'from' && draftTo ? parseDateString(draftTo) : undefined}
-                    minimumDate={pickerTarget === 'to' && draftFrom ? parseDateString(draftFrom) : undefined}
-                  />
-                </View>
-              ) : null}
+        {/* iOS Inline DateTimePicker Container */}
+        {Platform.OS === 'ios' && pickerTarget ? (
+          <View style={styles.iosPickerCard}>
+            <View style={styles.iosPickerHeader}>
+              <Text style={styles.iosPickerTitle}>
+                {pickerTarget === 'from' ? 'Pilih Dari Tanggal' : 'Pilih Sampai Tanggal'}
+              </Text>
+              <Button
+                title="Selesai"
+                onPress={() => setPickerTarget(null)}
+                variant="ghost"
+                size="sm"
+              />
             </View>
-          </ScrollView>
-
-          {/* Android DateTimePicker */}
-          {Platform.OS === 'android' && pickerTarget ? (
             <DateTimePicker
               value={activePickerDate}
               mode="date"
-              display="default"
+              display="spinner"
               onChange={handlePickerChange}
               maximumDate={pickerTarget === 'from' && draftTo ? parseDateString(draftTo) : undefined}
               minimumDate={pickerTarget === 'to' && draftFrom ? parseDateString(draftFrom) : undefined}
             />
-          ) : null}
-
-          {/* Footer Action Buttons */}
-          <View style={styles.footer}>
-            <Pressable
-              style={styles.resetBtn}
-              onPress={handleReset}
-              accessibilityRole="button"
-            >
-              <Text style={styles.resetBtnText}>Reset</Text>
-            </Pressable>
-
-            <Pressable
-              style={styles.applyBtn}
-              onPress={handleApply}
-              accessibilityRole="button"
-            >
-              <Text style={styles.applyBtnText}>Terapkan Filter</Text>
-            </Pressable>
           </View>
-        </View>
+        ) : null}
       </View>
-    </Modal>
+
+      {/* Android DateTimePicker */}
+      {Platform.OS === 'android' && pickerTarget ? (
+        <DateTimePicker
+          value={activePickerDate}
+          mode="date"
+          display="default"
+          onChange={handlePickerChange}
+          maximumDate={pickerTarget === 'from' && draftTo ? parseDateString(draftTo) : undefined}
+          minimumDate={pickerTarget === 'to' && draftFrom ? parseDateString(draftFrom) : undefined}
+        />
+      ) : null}
+    </BottomSheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
-    justifyContent: 'flex-end',
-  },
-  backdropPressable: {
-    flex: 1,
-  },
-  sheetContainer: {
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderCurve: 'continuous',
-    maxHeight: '88%',
-    paddingBottom: Platform.OS === 'ios' ? 28 : 20,
-    boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.1)',
-  },
-  dragHandleWrap: {
-    alignItems: 'center',
-    paddingTop: 10,
-    paddingBottom: 4,
-  },
-  dragHandle: {
-    width: 38,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#d7dfec',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.line,
-  },
-  title: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: COLORS.ink,
-  },
-  subtitle: {
-    fontSize: 12,
-    color: COLORS.muted,
-    marginTop: 2,
-  },
-  closeBtn: {
-    padding: 6,
-    borderRadius: 16,
-    backgroundColor: '#f1f4fa',
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    gap: 20,
-  },
   section: {
-    gap: 10,
+    gap: spacing['3'],
+    marginBottom: spacing['8'],
   },
   sectionLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: COLORS.muted,
+    ...typography.overline,
+    color: colors.muted,
     letterSpacing: 0.6,
   },
   presetsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-  },
-  presetChip: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.white,
-  },
-  presetChipActive: {
-    backgroundColor: COLORS.pale,
-    borderColor: COLORS.primary,
-  },
-  presetChipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.ink,
-  },
-  presetChipTextActive: {
-    color: COLORS.primary,
-    fontWeight: '700',
+    gap: spacing['3'],
   },
   monthHeaderRow: {
     flexDirection: 'row',
@@ -592,8 +461,8 @@ const styles = StyleSheet.create({
   yearPickerWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f1f4fa',
-    borderRadius: 12,
+    backgroundColor: colors.surfaceControl,
+    borderRadius: radii.lg,
     borderCurve: 'continuous',
     paddingHorizontal: 6,
     paddingVertical: 3,
@@ -608,7 +477,7 @@ const styles = StyleSheet.create({
   yearText: {
     fontSize: 13,
     fontWeight: '700',
-    color: COLORS.ink,
+    color: colors.ink,
     minWidth: 42,
     textAlign: 'center',
     fontVariant: ['tabular-nums'],
@@ -616,66 +485,64 @@ const styles = StyleSheet.create({
   monthGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing['2'],
     justifyContent: 'space-between',
   },
   monthCell: {
     width: '23%',
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: radii.md,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: COLORS.line,
-    backgroundColor: '#fafbfd',
+    borderColor: colors.line,
+    backgroundColor: colors.surfaceInput,
     alignItems: 'center',
     justifyContent: 'center',
   },
   monthCellActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   monthCellCurrent: {
-    borderColor: COLORS.primary,
+    borderColor: colors.primary,
     borderWidth: 1.5,
   },
   monthCellText: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.ink,
+    color: colors.ink,
   },
   monthCellTextActive: {
-    color: COLORS.white,
+    color: colors.white,
     fontWeight: '700',
   },
   monthCellTextCurrent: {
-    color: COLORS.primary,
+    color: colors.primary,
     fontWeight: '700',
   },
   customRangeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing['3'],
   },
   dateBox: {
     flex: 1,
-    backgroundColor: '#f8fafd',
-    borderRadius: 12,
+    backgroundColor: colors.surfaceInput,
+    borderRadius: radii.lg,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     paddingVertical: 10,
     paddingHorizontal: 12,
   },
   dateBoxActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.pale,
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryPale,
   },
   dateBoxLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: COLORS.muted,
+    ...typography.overline,
+    color: colors.muted,
     marginBottom: 4,
-    textTransform: 'uppercase',
   },
   dateBoxValueRow: {
     flexDirection: 'row',
@@ -685,21 +552,21 @@ const styles = StyleSheet.create({
   dateBoxValue: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.muted,
+    color: colors.muted,
     fontVariant: ['tabular-nums'],
   },
   dateBoxValueActive: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontWeight: '700',
   },
   iosPickerCard: {
     marginTop: 10,
-    backgroundColor: '#f4f7fc',
-    borderRadius: 14,
+    backgroundColor: colors.surfaceInput,
+    borderRadius: radii.xl,
     borderCurve: 'continuous',
     padding: 10,
     borderWidth: 1,
-    borderColor: COLORS.line,
+    borderColor: colors.line,
   },
   iosPickerHeader: {
     flexDirection: 'row',
@@ -711,57 +578,18 @@ const styles = StyleSheet.create({
   iosPickerTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: COLORS.ink,
-  },
-  iosPickerDoneBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-  },
-  iosPickerDoneText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.primary,
+    color: colors.ink,
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.line,
+    gap: spacing['4'],
+    paddingTop: spacing['3'],
   },
   resetBtn: {
-    paddingVertical: 13,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.white,
-    minHeight: 46,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  resetBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.muted,
+    paddingHorizontal: spacing['6'],
   },
   applyBtn: {
     flex: 1,
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    paddingVertical: 13,
-    minHeight: 46,
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 2px 8px rgba(36, 81, 191, 0.25)',
-  },
-  applyBtnText: {
-    color: COLORS.white,
-    fontSize: 14,
-    fontWeight: '700',
   },
 });

@@ -3,15 +3,13 @@ import {
   StyleSheet,
   Text,
   View,
-  TextInput,
-  Pressable,
+  TextInput as RNTextInput,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -22,12 +20,24 @@ import {
   getTransactionById,
 } from '../db/queries/transactions';
 import { CategoryPickerModal } from '../components/CategoryPickerModal';
-import { COLORS, MAX_AMOUNT, MAX_NOTE_LENGTH } from '../lib/constants';
+import { MAX_AMOUNT, MAX_NOTE_LENGTH } from '../lib/constants';
 import {
   rupiahFormatter,
   formatDate,
   getTodayDateString,
 } from '../lib/format';
+import {
+  colors,
+  radii,
+  spacing,
+  typography,
+  ScreenHeader,
+  SegmentedControl,
+  SelectField,
+  TextInput,
+  Button,
+  CategoryDot,
+} from '@/components/ui';
 
 export default function RecordScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
@@ -181,7 +191,7 @@ export default function RecordScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -191,76 +201,39 @@ export default function RecordScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* Top Blue Header */}
-      <View style={styles.header}>
-        <SafeAreaView edges={['top']} style={styles.headerInner}>
-          <Pressable
-            onPress={() => router.back()}
-            style={styles.backButton}
-            accessibilityLabel="Kembali"
-          >
-            <Ionicons name="arrow-back" size={24} color={COLORS.white} />
-          </Pressable>
-          <Text style={styles.headerTitle}>
-            {isEditing ? 'Ubah transaksi' : 'Catat transaksi'}
-          </Text>
-          <View style={styles.headerPlaceholder} />
-        </SafeAreaView>
-      </View>
+      <ScreenHeader
+        title={isEditing ? 'Perbarui transaksi' : 'Catat transaksi'}
+        onBack={() => router.back()}
+      />
 
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Type Toggle Segment */}
-        <View style={styles.segmentedControl}>
-          <Pressable
-            onPress={() => handleTypeChange('expense')}
-            style={[
-              styles.segmentButton,
-              type === 'expense' ? styles.segmentButtonActive : null,
-            ]}
-          >
-            <Text
-              style={[
-                styles.segmentText,
-                type === 'expense' ? styles.segmentTextActiveExpense : null,
-              ]}
-            >
-              ↗ Keluar
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => handleTypeChange('income')}
-            style={[
-              styles.segmentButton,
-              type === 'income' ? styles.segmentButtonActive : null,
-            ]}
-          >
-            <Text
-              style={[
-                styles.segmentText,
-                type === 'income' ? styles.segmentTextActiveIncome : null,
-              ]}
-            >
-              ↙ Masuk
-            </Text>
-          </Pressable>
-        </View>
+        {/* Income / Expense Segmented Control */}
+        <SegmentedControl
+          segments={[
+            { value: 'expense', label: '↗ Keluar' },
+            { value: 'income', label: '↙ Masuk' },
+          ]}
+          selected={type}
+          onChange={handleTypeChange}
+          colorMap={{ expense: colors.primary, income: colors.green }}
+          style={styles.segmented}
+        />
 
         {/* Nominal Field */}
         <View style={styles.field}>
           <Text style={styles.label}>Nominal</Text>
           <View style={styles.moneyInputWrap}>
             <Text style={styles.moneyPrefix}>Rp</Text>
-            <TextInput
+            <RNTextInput
               style={styles.moneyInput}
               value={amountStr}
               onChangeText={handleAmountChange}
               placeholder="0"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.placeholder}
               keyboardType="numeric"
               inputMode="numeric"
               accessibilityLabel="Nominal dalam rupiah"
@@ -271,43 +244,32 @@ export default function RecordScreen() {
 
         {/* Category Field */}
         <View style={styles.field}>
-          <Text style={styles.label}>Kategori</Text>
-          <Pressable
-            style={styles.selectorButton}
+          <SelectField
+            label="Kategori"
+            value={selectedCategory?.name}
+            placeholder="Pilih kategori"
             onPress={() => setPickerModalVisible(true)}
-            accessibilityRole="button"
-          >
-            {selectedCategory ? (
-              <View style={styles.selectedCatWrap}>
-                <View
-                  style={[
-                    styles.catDotSmall,
-                    { backgroundColor: selectedCategory.color || COLORS.primary },
-                  ]}
+            leftIcon={
+              selectedCategory ? (
+                <CategoryDot
+                  color={selectedCategory.color || colors.primary}
+                  size="sm"
                 />
-                <Text style={styles.selectedCatText}>{selectedCategory.name}</Text>
-              </View>
-            ) : (
-              <Text style={styles.selectorPlaceholder}>Pilih kategori</Text>
-            )}
-            <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
-          </Pressable>
+              ) : null
+            }
+          />
         </View>
 
         {/* Date Field */}
         <View style={styles.field}>
-          <Text style={styles.label}>Tanggal</Text>
-          <Pressable
-            style={styles.selectorButton}
+          <SelectField
+            label="Tanggal"
+            value={formatDate(dateStr)}
             onPress={() => setShowDatePicker(true)}
-            accessibilityRole="button"
-          >
-            <View style={styles.dateDisplayRow}>
-              <Ionicons name="calendar-outline" size={18} color={COLORS.muted} />
-              <Text style={styles.selectorText}>{formatDate(dateStr)}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
-          </Pressable>
+            leftIcon={
+              <Ionicons name="calendar-outline" size={18} color={colors.muted} />
+            }
+          />
         </View>
 
         {/* Date Picker Component */}
@@ -320,12 +282,12 @@ export default function RecordScreen() {
                 display="spinner"
                 onChange={onDateChange}
               />
-              <Pressable
-                style={styles.doneDateBtn}
+              <Button
+                title="Selesai"
                 onPress={() => setShowDatePicker(false)}
-              >
-                <Text style={styles.doneDateBtnText}>Selesai</Text>
-              </Pressable>
+                size="sm"
+                style={styles.doneDateBtn}
+              />
             </View>
           ) : (
             <DateTimePicker
@@ -339,38 +301,33 @@ export default function RecordScreen() {
 
         {/* Note Field */}
         <View style={styles.field}>
-          <Text style={styles.label}>Catatan (opsional)</Text>
           <TextInput
-            style={styles.textInput}
+            label="Catatan (opsional)"
             value={note}
             onChangeText={setNote}
             placeholder="Contoh: Kopi sore, Gaji bulanan"
-            placeholderTextColor="#9ca3af"
             maxLength={MAX_NOTE_LENGTH}
+            charCount={{ current: note.length, max: MAX_NOTE_LENGTH }}
           />
-          <Text style={styles.charCounter}>
-            {note.length}/{MAX_NOTE_LENGTH}
-          </Text>
         </View>
 
-        {/* Error Text */}
-        {errorText ? <Text style={styles.errorBanner}>{errorText}</Text> : null}
+        {/* Error Text Banner */}
+        {errorText ? (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorBannerText}>{errorText}</Text>
+          </View>
+        ) : null}
 
         {/* Save Button */}
-        <Pressable
-          style={[styles.saveButton, submitting ? styles.btnDisabled : null]}
+        <Button
+          title={isEditing ? 'Perbarui transaksi' : 'Simpan transaksi'}
           onPress={handleSave}
-          disabled={submitting}
-          accessibilityRole="button"
-        >
-          {submitting ? (
-            <ActivityIndicator size="small" color={COLORS.white} />
-          ) : (
-            <Text style={styles.saveButtonText}>
-              {isEditing ? 'Perbarui transaksi' : 'Simpan transaksi'}
-            </Text>
-          )}
-        </Pressable>
+          variant="primary"
+          size="lg"
+          fullWidth
+          loading={submitting}
+          style={styles.saveBtn}
+        />
       </ScrollView>
 
       {/* Category Picker Modal */}
@@ -392,216 +349,80 @@ export default function RecordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: colors.white,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
-  },
-  header: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  headerInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 8,
-  },
-  backButton: {
-    padding: 6,
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: COLORS.white,
-  },
-  headerPlaceholder: {
-    width: 36,
+    backgroundColor: colors.white,
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
+    padding: spacing['8'],
+    paddingBottom: spacing['20'],
   },
-  segmentedControl: {
-    flexDirection: 'row',
-    backgroundColor: '#f1f4fa',
-    padding: 4,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    gap: 6,
-    marginBottom: 24,
-  },
-  segmentButton: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 9,
-    borderCurve: 'continuous',
-  },
-  segmentButtonActive: {
-    backgroundColor: COLORS.white,
-    boxShadow: '0 2px 7px rgba(220, 227, 239, 0.9)',
-    elevation: 2,
-  },
-  segmentText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#91a0b5',
-  },
-  segmentTextActiveExpense: {
-    color: COLORS.primary,
-  },
-  segmentTextActiveIncome: {
-    color: COLORS.green,
+  segmented: {
+    marginBottom: spacing['12'],
   },
   field: {
-    marginBottom: 22,
+    marginBottom: spacing['8'],
   },
   label: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.ink,
-    marginBottom: 8,
+    ...typography.captionBold,
+    color: colors.ink,
+    marginBottom: spacing['3'],
   },
   moneyInputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1.5,
-    borderBottomColor: '#dbe4f2',
-    paddingBottom: 8,
-    gap: 8,
+    borderBottomColor: colors.border,
+    paddingBottom: spacing['4'],
+    gap: spacing['4'],
   },
   moneyPrefix: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#7b8da9',
+    color: colors.muted,
   },
   moneyInput: {
     flex: 1,
     fontSize: 32,
     fontWeight: '800',
-    color: COLORS.ink,
+    color: colors.ink,
     letterSpacing: -0.5,
     padding: 0,
   },
-  selectorButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f8fafd',
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-  },
-  selectorPlaceholder: {
-    fontSize: 14,
-    color: COLORS.muted,
-  },
-  selectorText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.ink,
-  },
-  selectedCatWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  catDotSmall: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-  },
-  selectedCatText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.ink,
-  },
-  dateDisplayRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   iosDatePickerContainer: {
-    backgroundColor: '#f8fafd',
-    borderRadius: 12,
+    backgroundColor: colors.surfaceInput,
+    borderRadius: radii.lg,
     borderCurve: 'continuous',
-    padding: 10,
-    marginTop: -10,
-    marginBottom: 16,
+    padding: spacing['5'],
+    marginTop: -spacing['4'],
+    marginBottom: spacing['8'],
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.borderInput,
   },
   doneDateBtn: {
-    alignItems: 'center',
-    paddingVertical: 10,
-    backgroundColor: COLORS.primary,
-    borderRadius: 8,
-    borderCurve: 'continuous',
-    marginTop: 6,
-  },
-  doneDateBtnText: {
-    color: COLORS.white,
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  textInput: {
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f8fafd',
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: COLORS.ink,
-  },
-  charCounter: {
-    fontSize: 10,
-    color: COLORS.muted,
-    textAlign: 'right',
-    marginTop: 4,
+    marginTop: spacing['3'],
   },
   errorBanner: {
-    color: COLORS.red,
-    fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 16,
-    backgroundColor: '#fef2f2',
-    padding: 10,
-    borderRadius: 8,
+    marginBottom: spacing['8'],
+    backgroundColor: colors.errorBg,
+    padding: spacing['5'],
+    borderRadius: radii.sm,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: colors.errorBorder,
   },
-  saveButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 14,
-    borderCurve: 'continuous',
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 8px 20px rgba(36, 81, 191, 0.3)',
-    elevation: 3,
-    marginTop: 8,
+  errorBannerText: {
+    ...typography.caption,
+    color: colors.red,
   },
-  saveButtonText: {
-    color: COLORS.white,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  btnDisabled: {
-    opacity: 0.6,
+  saveBtn: {
+    marginTop: spacing['4'],
   },
 });

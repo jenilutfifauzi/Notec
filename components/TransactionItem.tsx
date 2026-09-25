@@ -1,9 +1,9 @@
 import React, { memo } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
-import { COLORS } from '../lib/constants';
 import { formatRupiah, formatDate } from '../lib/format';
+import { colors, radii, spacing, typography, AppText } from '@/components/ui';
 
-interface TransactionItemProps {
+export interface TransactionItemProps {
   id: number;
   note: string | null;
   categoryName: string;
@@ -45,12 +45,13 @@ export const TransactionItem = memo(function TransactionItem({
       onLongPress={handleLongPress}
       style={styles.container}
       accessibilityRole="button"
+      accessibilityLabel={`${title}, ${formattedAmount}, ${subtitle}`}
     >
       {/* Category Icon */}
       <View
         style={[
           styles.iconContainer,
-          { backgroundColor: categoryColor || COLORS.primary },
+          { backgroundColor: categoryColor || colors.primary },
         ]}
       >
         <Text style={styles.iconText}>{isExpense ? '↗' : '↙'}</Text>
@@ -67,14 +68,14 @@ export const TransactionItem = memo(function TransactionItem({
       </View>
 
       {/* Amount */}
-      <Text
-        style={[
-          styles.amount,
-          isExpense ? styles.expenseAmount : styles.incomeAmount,
-        ]}
+      <AppText
+        variant="bodyBold"
+        tabularNums
+        color={isExpense ? colors.red : colors.green}
+        style={styles.amount}
       >
         {formattedAmount}
-      </Text>
+      </AppText>
     </Pressable>
   );
 });
@@ -83,48 +84,40 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: spacing['6'],
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.line,
+    borderBottomColor: colors.line,
   },
   iconContainer: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: radii.md,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconText: {
-    color: COLORS.white,
+    color: colors.white,
     fontSize: 16,
     fontWeight: '700',
   },
   textContainer: {
     flex: 1,
-    marginLeft: 12,
-    marginRight: 8,
+    marginLeft: spacing['6'],
+    marginRight: spacing['4'],
   },
   title: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.ink,
+    ...typography.bodyBold,
+    color: colors.ink,
     letterSpacing: -0.2,
   },
   subtitle: {
+    ...typography.caption,
     fontSize: 11,
-    color: COLORS.muted,
+    color: colors.muted,
     marginTop: 2,
   },
   amount: {
-    fontSize: 14,
-    fontWeight: '800',
     letterSpacing: -0.3,
-  },
-  expenseAmount: {
-    color: COLORS.red,
-  },
-  incomeAmount: {
-    color: COLORS.green,
   },
 });

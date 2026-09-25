@@ -5,14 +5,8 @@ import {
   View,
   ScrollView,
   Pressable,
-  Modal,
-  TextInput,
-  ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -28,7 +22,19 @@ import {
 } from '../db/queries/backup';
 import { encryptBackup, decryptBackup } from '../lib/crypto';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { COLORS } from '../lib/constants';
+import {
+  colors,
+  radii,
+  spacing,
+  typography,
+  ScreenHeader,
+  SectionHeader,
+  Card,
+  BottomSheetModal,
+  TextInput,
+  Button,
+  Toast,
+} from '@/components/ui';
 
 export default function SettingsScreen() {
   // Backup modal state
@@ -45,6 +51,7 @@ export default function SettingsScreen() {
   const [restoreError, setRestoreError] = useState<string | null>(null);
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [pendingRestoreData, setPendingRestoreData] = useState<BackupData | null>(null);
+  const [pendingRestoreJson, setPendingRestoreJson] = useState<string | null>(null);
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
 
   // Delete all state
@@ -92,143 +99,80 @@ export default function SettingsScreen() {
       const payload = await generateBackupPayload();
       const encryptedBase64 = await encryptBackup(payload, pwd);
 
-      // Write to file
-      const now = new Date();
-      const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      const fileName = `catatan_${dateStr}.ckbackup`;
+      const timestamp = new Date()
+        .toISOString()
+        .replace(/[:.]/g, '-')
+        .slice(0, 19);
+      const filename = `catatan-keuangan-backup-${timestamp}.ckbackup`;
 
-      if (Platform.OS === 'web') {
-        const blob = new Blob([encryptedBase64], { type: 'application/octet-stream' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      } else {
-        const dir = FileSystem.documentDirectory || FileSystem.cacheDirectory || '';
-        const fileUri = `${dir}${fileName}`;
+      // Save to document directory
+      const docDir = FileSystem.documentDirectory;
+      if (!docDir) {
+        throw new Error('Direktori penyimpanan tidak tersedia');
+      }
+      const fileUri = docDir + filename;
 
-        await FileSystem.writeAsStringAsync(fileUri, encryptedBase64, {
-          encoding: FileSystem.EncodingType.UTF8,
+      await FileSystem.writeAsStringAsync(fileUri, encryptedBase64, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      // Share/Save dialog
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'application/octet-stream',
+          dialogTitle: 'Simpan Berkas Cadangan',
+          UTI: 'public.data',
         });
-
-        // Share via system picker
-        const isSharingAvailable = await Sharing.isAvailableAsync();
-        if (isSharingAvailable) {
-          await Sharing.shareAsync(fileUri, {
-            mimeType: 'application/octet-stream',
-            dialogTitle: 'Simpan Cadangan Catatan Keuangan',
-            UTI: 'public.data',
-          });
-        }
+        showToast('Berkas cadangan berhasil dibuat');
+      } else {
+        Alert.alert(
+          'Cadangan Tersimpan',
+          `Berkas tersimpan di: ${filename}. Berbagi tidak didukung pada perangkat ini.`
+        );
       }
 
       setBackupModalVisible(false);
-      showToast('Cadangan berhasil dibuat');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Gagal membuat cadangan';
       setBackupError(msg);
-      Alert.alert('Gagal', msg);
     } finally {
       setIsBackingUp(false);
     }
   };
 
-  // 2. Handle Backup Restore
+  // 2. Handle Restore Import
   const handleStartRestore = async () => {
     try {
-      let fileData: string | null = null;
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['*/*'],
+        copyToCacheDirectory: true,
+      });
 
-      // 1. Web environment
-      if (Platform.OS === 'web') {
-        const result = await DocumentPicker.getDocumentAsync({
-          type: '*/*',
-        });
-
-        if (result.canceled || !result.assets || result.assets.length === 0) {
-          return;
-        }
-
-        const asset = result.assets[0];
-        if (asset.file) {
-          fileData = await asset.file.text();
-        } else if (asset.uri) {
-          const res = await fetch(asset.uri);
-          fileData = await res.text();
-        }
-      } else {
-        // 2. Native (Android & iOS):
-        // On Android, copyToCacheDirectory MUST be false. Setting it to true copies
-        // the file into host.exp.exponent/cache/DocumentPicker/ which Expo Go's security
-        // sandbox rejects with "Missing READ permission". With false, it returns the original
-        // content:// URI which ExpoFile reads directly via ContentResolver.
-        let pickedUri: string | null = null;
-
-        try {
-          const result = await DocumentPicker.getDocumentAsync({
-            type: '*/*',
-            copyToCacheDirectory: Platform.OS === 'ios',
-          });
-
-          if (result.canceled || !result.assets || result.assets.length === 0) {
-            return;
-          }
-          pickedUri = result.assets[0].uri;
-        } catch (pickerErr) {
-          console.warn('DocumentPicker.getDocumentAsync failed:', pickerErr);
-        }
-
-        // Secondary native picker fallback: ExpoFile.pickFileAsync
-        if (!pickedUri) {
-          try {
-            const pickRes = await ExpoFile.pickFileAsync();
-            if (pickRes && !pickRes.canceled && pickRes.result) {
-              fileData = await pickRes.result.text();
-            } else {
-              return;
-            }
-          } catch (filePickerErr) {
-            console.warn('ExpoFile.pickFileAsync fallback failed:', filePickerErr);
-          }
-        }
-
-        // Read the picked URI
-        if (pickedUri && !fileData) {
-          // Primary native: ExpoFile (properly handles content://, SAF, and file://)
-          try {
-            const file = new ExpoFile(pickedUri);
-            fileData = await file.text();
-          } catch (fileErr) {
-            console.warn('ExpoFile.text() failed, trying legacy FileSystem:', fileErr);
-          }
-
-          // Fallback native: legacy FileSystem
-          if (!fileData) {
-            try {
-              fileData = await FileSystem.readAsStringAsync(pickedUri, {
-                encoding: FileSystem.EncodingType.UTF8,
-              });
-            } catch (legacyErr) {
-              console.warn('FileSystem.readAsStringAsync failed:', legacyErr);
-            }
-          }
-        }
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
       }
 
-      if (!fileData) {
-        throw new Error('Berkas kosong atau tidak dapat diakses');
+      const file = result.assets[0];
+      if (!file.name.endsWith('.ckbackup')) {
+        Alert.alert(
+          'Format Tidak Sesuai',
+          'Harap pilih berkas cadangan dengan ekstensi .ckbackup'
+        );
+        return;
       }
-      setRestoreFileContent(fileData);
+
+      // Read file content
+      const expoFile = new ExpoFile(file.uri);
+      const content = await expoFile.text();
+
+      setRestoreFileContent(content);
       setRestorePassword('');
       setRestoreError(null);
       setRestoreModalVisible(true);
     } catch (err) {
-      console.error('Error saat memilih/membaca berkas cadangan:', err);
-      const msg = err instanceof Error ? err.message : 'Gagal membuka berkas';
-      Alert.alert('Gagal', `Tidak dapat membaca berkas cadangan: ${msg}`);
+      const msg = err instanceof Error ? err.message : 'Gagal membaca berkas cadangan';
+      Alert.alert('Gagal Membaca Berkas', msg);
     }
   };
 
@@ -236,7 +180,7 @@ export default function SettingsScreen() {
     if (!restoreFileContent) return;
     const pwd = restorePassword.trim();
     if (!pwd) {
-      setRestoreError('Masukkan kata sandi');
+      setRestoreError('Masukkan kata sandi cadangan');
       return;
     }
 
@@ -244,39 +188,41 @@ export default function SettingsScreen() {
       setIsDecrypting(true);
       setRestoreError(null);
 
-      // Decrypt
-      const decryptedJson = await decryptBackup(restoreFileContent, pwd);
+      const decryptedPayload = await decryptBackup(restoreFileContent, pwd);
+      const parsedData = validateBackupPayload(decryptedPayload);
 
-      // Validate structure
-      const validated = validateBackupPayload(decryptedJson);
-
-      setPendingRestoreData(validated);
+      setPendingRestoreData(parsedData);
+      setPendingRestoreJson(decryptedPayload);
       setRestoreModalVisible(false);
       setShowRestoreConfirm(true);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Sandi salah atau berkas rusak';
-      setRestoreError(msg);
+      const msg = err instanceof Error ? err.message : 'Kata sandi salah atau berkas rusak';
+      if (
+        msg.includes('Bad MAC') ||
+        msg.includes('Unsupported state') ||
+        msg.includes('decryption failed') ||
+        msg.includes('Gagal mendekripsi')
+      ) {
+        setRestoreError('Kata sandi salah atau berkas rusak');
+      } else {
+        setRestoreError(msg);
+      }
     } finally {
       setIsDecrypting(false);
     }
   };
 
   const handleConfirmRestore = async () => {
-    if (!pendingRestoreData) return;
+    if (!pendingRestoreJson) return;
     try {
+      await restoreFromPayload(pendingRestoreJson);
       setShowRestoreConfirm(false);
-      const jsonStr = JSON.stringify(pendingRestoreData);
-      const counts = await restoreFromPayload(jsonStr);
-
-      showToast(`Data berhasil dipulihkan: ${counts.transactionCount} transaksi`);
       setPendingRestoreData(null);
-      setRestoreFileContent(null);
-
-      setTimeout(() => {
-        router.push('/(tabs)');
-      }, 500);
+      setPendingRestoreJson(null);
+      showToast('Data berhasil dipulihkan dari cadangan');
     } catch (err) {
-      Alert.alert('Gagal memulihkan', err instanceof Error ? err.message : 'Terjadi kesalahan');
+      const msg = err instanceof Error ? err.message : 'Gagal memulihkan data';
+      Alert.alert('Pemulihan Gagal', msg);
     }
   };
 
@@ -287,11 +233,9 @@ export default function SettingsScreen() {
       setShowDeleteConfirm(false);
       await deleteAllData();
       showToast('Semua data berhasil dihapus');
-      setTimeout(() => {
-        router.push('/(tabs)');
-      }, 500);
     } catch (err) {
-      Alert.alert('Gagal', err instanceof Error ? err.message : 'Gagal menghapus data');
+      const msg = err instanceof Error ? err.message : 'Gagal menghapus data';
+      Alert.alert('Gagal', msg);
     } finally {
       setIsDeleting(false);
     }
@@ -300,19 +244,10 @@ export default function SettingsScreen() {
   return (
     <View style={styles.container}>
       {/* Blue Header */}
-      <View style={styles.header}>
-        <SafeAreaView edges={['top']} style={styles.headerInner}>
-          <Pressable
-            onPress={() => router.back()}
-            style={styles.backButton}
-            accessibilityLabel="Kembali"
-          >
-            <Ionicons name="arrow-back" size={24} color={COLORS.white} />
-          </Pressable>
-          <Text style={styles.headerTitle}>Pengaturan</Text>
-          <View style={styles.headerPlaceholder} />
-        </SafeAreaView>
-      </View>
+      <ScreenHeader
+        title="Pengaturan"
+        onBack={() => router.back()}
+      />
 
       <ScrollView
         style={styles.scroll}
@@ -320,8 +255,8 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Section: Kategori */}
-        <Text style={styles.sectionHeader}>KATEGORI</Text>
-        <View style={styles.menuCard}>
+        <SectionHeader title="KATEGORI" variant="overline" style={styles.sectionHeaderWrap} />
+        <Card style={styles.menuCard}>
           <Pressable
             style={[styles.menuRow, styles.menuRowLast]}
             onPress={() => router.push('/categories')}
@@ -334,23 +269,23 @@ export default function SettingsScreen() {
               <Text style={styles.menuTitle}>Kelola kategori</Text>
               <Text style={styles.menuSubtitle}>Tambah, ubah, atau arsipkan kategori</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#b5c1d3" />
+            <Ionicons name="chevron-forward" size={18} color={colors.chevron} />
           </Pressable>
-        </View>
+        </Card>
 
         {/* Section: Data */}
-        <Text style={styles.sectionHeader}>DATA & CADANGAN</Text>
-        <View style={styles.menuCard}>
+        <SectionHeader title="DATA & CADANGAN" variant="overline" style={styles.sectionHeaderWrap} />
+        <Card style={styles.menuCard}>
           {/* Cadangkan Data */}
           <Pressable style={styles.menuRow} onPress={handleStartBackup} accessibilityRole="button">
-            <View style={[styles.menuIconWrap, { backgroundColor: '#eaf0ff' }]}>
-              <Ionicons name="cloud-upload-outline" size={20} color={COLORS.primary} />
+            <View style={[styles.menuIconWrap, { backgroundColor: colors.primaryPale }]}>
+              <Ionicons name="cloud-upload-outline" size={20} color={colors.primary} />
             </View>
             <View style={styles.menuTextWrap}>
               <Text style={styles.menuTitle}>Cadangkan data</Text>
               <Text style={styles.menuSubtitle}>Ekspor data terenkripsi sandi (.ckbackup)</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#b5c1d3" />
+            <Ionicons name="chevron-forward" size={18} color={colors.chevron} />
           </Pressable>
 
           {/* Pulihkan Cadangan */}
@@ -362,7 +297,7 @@ export default function SettingsScreen() {
               <Text style={styles.menuTitle}>Pulihkan cadangan</Text>
               <Text style={styles.menuSubtitle}>Buka dan pulihkan berkas .ckbackup</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#b5c1d3" />
+            <Ionicons name="chevron-forward" size={18} color={colors.chevron} />
           </Pressable>
 
           {/* Hapus Semua Data */}
@@ -372,22 +307,22 @@ export default function SettingsScreen() {
             accessibilityRole="button"
           >
             <View style={[styles.menuIconWrap, { backgroundColor: '#fee2e2' }]}>
-              <Ionicons name="trash-outline" size={20} color={COLORS.red} />
+              <Ionicons name="trash-outline" size={20} color={colors.red} />
             </View>
             <View style={styles.menuTextWrap}>
               <Text style={[styles.menuTitle, styles.destructiveText]}>Hapus semua data</Text>
               <Text style={styles.menuSubtitle}>Hapus semua transaksi dan atur ulang kategori</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#b5c1d3" />
+            <Ionicons name="chevron-forward" size={18} color={colors.chevron} />
           </Pressable>
-        </View>
+        </Card>
 
         {/* Info Card */}
-        <View style={styles.infoCard}>
+        <Card style={styles.infoCard}>
           <Ionicons
             name="shield-checkmark-outline"
             size={22}
-            color={COLORS.primary}
+            color={colors.primary}
             style={styles.infoIcon}
           />
           <View style={styles.infoTextContainer}>
@@ -401,7 +336,7 @@ export default function SettingsScreen() {
               berpindah perangkat.
             </Text>
           </View>
-        </View>
+        </Card>
 
         {/* App Info */}
         <View style={styles.appInfo}>
@@ -411,145 +346,87 @@ export default function SettingsScreen() {
       </ScrollView>
 
       {/* Backup Password Modal */}
-      <Modal
+      <BottomSheetModal
         visible={backupModalVisible}
-        presentationStyle="formSheet"
-        animationType="slide"
-        onRequestClose={() => !isBackingUp && setBackupModalVisible(false)}
+        onClose={() => !isBackingUp && setBackupModalVisible(false)}
+        title="Cadangkan Data"
+        subtitle="Tentukan kata sandi untuk melindungi berkas cadangan Anda. Sandi ini akan dibutuhkan untuk membuka cadangan di kemudian hari."
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.modalContent}
-        >
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Cadangkan Data</Text>
-            <Pressable
-              onPress={() => setBackupModalVisible(false)}
-              disabled={isBackingUp}
-              style={styles.closeModalBtn}
-            >
-              <Ionicons name="close" size={22} color={COLORS.ink} />
-            </Pressable>
-          </View>
+        <TextInput
+          label="Kata Sandi"
+          value={backupPassword}
+          onChangeText={(t) => {
+            setBackupPassword(t);
+            if (backupError) setBackupError(null);
+          }}
+          placeholder="Minimal 4 karakter"
+          secureTextEntry
+          autoFocus
+        />
 
-          <View style={styles.modalBody}>
-            <Text style={styles.modalDesc}>
-              Tentukan kata sandi untuk melindungi berkas cadangan Anda. Sandi ini akan
-              dibutuhkan untuk membuka cadangan di kemudian hari.
-            </Text>
+        <TextInput
+          label="Konfirmasi Kata Sandi"
+          value={confirmPassword}
+          onChangeText={(t) => {
+            setConfirmPassword(t);
+            if (backupError) setBackupError(null);
+          }}
+          placeholder="Ulangi kata sandi"
+          secureTextEntry
+          containerStyle={{ marginTop: spacing['4'] }}
+        />
 
-            <Text style={styles.modalLabel}>Kata Sandi</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={backupPassword}
-              onChangeText={(t) => {
-                setBackupPassword(t);
-                if (backupError) setBackupError(null);
-              }}
-              placeholder="Minimal 4 karakter"
-              placeholderTextColor={COLORS.muted}
-              secureTextEntry
-              autoFocus
-            />
+        <View style={styles.warningBox}>
+          <Ionicons name="alert-circle-outline" size={18} color={colors.warningIcon} />
+          <Text style={styles.warningText}>
+            Sandi ini tidak dapat dipulihkan jika lupa. Simpan atau ingat sandi dengan baik.
+          </Text>
+        </View>
 
-            <Text style={styles.modalLabel}>Konfirmasi Kata Sandi</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={confirmPassword}
-              onChangeText={(t) => {
-                setConfirmPassword(t);
-                if (backupError) setBackupError(null);
-              }}
-              placeholder="Ulangi kata sandi"
-              placeholderTextColor={COLORS.muted}
-              secureTextEntry
-            />
+        {backupError ? <Text style={styles.errorText}>{backupError}</Text> : null}
 
-            <View style={styles.warningBox}>
-              <Ionicons name="alert-circle-outline" size={18} color="#b45309" />
-              <Text style={styles.warningText}>
-                Sandi ini tidak dapat dipulihkan jika lupa. Simpan atau ingat sandi dengan baik.
-              </Text>
-            </View>
-
-            {backupError ? <Text style={styles.errorText}>{backupError}</Text> : null}
-
-            <View style={styles.modalActions}>
-              <Pressable
-                style={[styles.primaryActionBtn, isBackingUp ? styles.btnDisabled : null]}
-                onPress={handleExecuteBackup}
-                disabled={isBackingUp}
-              >
-                {isBackingUp ? (
-                  <ActivityIndicator size="small" color={COLORS.white} />
-                ) : (
-                  <Text style={styles.primaryActionBtnText}>Buat & Simpan Cadangan</Text>
-                )}
-              </Pressable>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        <View style={styles.modalActions}>
+          <Button
+            title="Buat & Simpan Cadangan"
+            onPress={handleExecuteBackup}
+            variant="primary"
+            fullWidth
+            loading={isBackingUp}
+          />
+        </View>
+      </BottomSheetModal>
 
       {/* Restore Password Modal */}
-      <Modal
+      <BottomSheetModal
         visible={restoreModalVisible}
-        presentationStyle="formSheet"
-        animationType="slide"
-        onRequestClose={() => !isDecrypting && setRestoreModalVisible(false)}
+        onClose={() => !isDecrypting && setRestoreModalVisible(false)}
+        title="Buka Cadangan"
+        subtitle="Masukkan kata sandi yang digunakan saat membuat berkas cadangan ini."
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.modalContent}
-        >
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Buka Cadangan</Text>
-            <Pressable
-              onPress={() => setRestoreModalVisible(false)}
-              disabled={isDecrypting}
-              style={styles.closeModalBtn}
-            >
-              <Ionicons name="close" size={22} color={COLORS.ink} />
-            </Pressable>
-          </View>
+        <TextInput
+          label="Kata Sandi"
+          value={restorePassword}
+          onChangeText={(t) => {
+            setRestorePassword(t);
+            if (restoreError) setRestoreError(null);
+          }}
+          placeholder="Masukkan kata sandi"
+          secureTextEntry
+          autoFocus
+        />
 
-          <View style={styles.modalBody}>
-            <Text style={styles.modalDesc}>
-              Masukkan kata sandi yang digunakan saat membuat berkas cadangan ini.
-            </Text>
+        {restoreError ? <Text style={styles.errorText}>{restoreError}</Text> : null}
 
-            <Text style={styles.modalLabel}>Kata Sandi</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={restorePassword}
-              onChangeText={(t) => {
-                setRestorePassword(t);
-                if (restoreError) setRestoreError(null);
-              }}
-              placeholder="Masukkan kata sandi"
-              placeholderTextColor={COLORS.muted}
-              secureTextEntry
-              autoFocus
-            />
-
-            {restoreError ? <Text style={styles.errorText}>{restoreError}</Text> : null}
-
-            <View style={styles.modalActions}>
-              <Pressable
-                style={[styles.primaryActionBtn, isDecrypting ? styles.btnDisabled : null]}
-                onPress={handleExecuteDecrypt}
-                disabled={isDecrypting}
-              >
-                {isDecrypting ? (
-                  <ActivityIndicator size="small" color={COLORS.white} />
-                ) : (
-                  <Text style={styles.primaryActionBtnText}>Buka Cadangan</Text>
-                )}
-              </Pressable>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        <View style={styles.modalActions}>
+          <Button
+            title="Buka Cadangan"
+            onPress={handleExecuteDecrypt}
+            variant="primary"
+            fullWidth
+            loading={isDecrypting}
+          />
+        </View>
+      </BottomSheetModal>
 
       {/* Confirmation Dialog for Restore */}
       <ConfirmDialog
@@ -579,11 +456,11 @@ export default function SettingsScreen() {
       />
 
       {/* Success Toast */}
-      {toastMessage ? (
-        <View style={styles.toast}>
-          <Text style={styles.toastText}>{toastMessage}</Text>
-        </View>
-      ) : null}
+      <Toast
+        visible={Boolean(toastMessage)}
+        message={toastMessage || ''}
+        onDismiss={() => setToastMessage(null)}
+      />
     </View>
   );
 }
@@ -591,64 +468,31 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.bg,
-  },
-  header: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  headerInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 8,
-  },
-  backButton: {
-    padding: 6,
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: COLORS.white,
-  },
-  headerPlaceholder: {
-    width: 36,
+    backgroundColor: colors.bg,
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 48,
+    padding: spacing['8'],
+    paddingBottom: spacing['24'],
   },
-  sectionHeader: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#8896aa',
-    letterSpacing: 0.8,
-    marginBottom: 8,
-    paddingHorizontal: 4,
-    marginTop: 6,
+  sectionHeaderWrap: {
+    marginTop: spacing['2'],
+    marginBottom: spacing['3'],
   },
   menuCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: COLORS.line,
+    padding: 0,
     overflow: 'hidden',
-    boxShadow: '0 4px 14px rgba(31, 63, 119, 0.04)',
-    elevation: 2,
-    marginBottom: 20,
+    marginBottom: spacing['10'],
   },
   menuRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing['8'],
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.line,
+    borderBottomColor: colors.line,
   },
   menuRowLast: {
     borderBottomWidth: 0,
@@ -656,7 +500,7 @@ const styles = StyleSheet.create({
   menuIconWrap: {
     width: 38,
     height: 38,
-    borderRadius: 10,
+    borderRadius: radii.md,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
@@ -666,28 +510,21 @@ const styles = StyleSheet.create({
     marginLeft: 14,
   },
   menuTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.ink,
+    ...typography.bodyBold,
+    color: colors.ink,
   },
   destructiveText: {
-    color: COLORS.red,
+    color: colors.red,
   },
   menuSubtitle: {
     fontSize: 11,
-    color: COLORS.muted,
+    color: colors.muted,
     marginTop: 2,
   },
   infoCard: {
     flexDirection: 'row',
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    borderCurve: 'continuous',
     padding: 18,
-    borderWidth: 1,
-    borderColor: COLORS.line,
     gap: 14,
-    boxShadow: '0 4px 14px rgba(31, 63, 119, 0.04)',
   },
   infoIcon: {
     marginTop: 2,
@@ -698,12 +535,12 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: COLORS.ink,
+    color: colors.ink,
     marginBottom: 4,
   },
   infoBody: {
     fontSize: 11,
-    color: '#64748b',
+    color: colors.subtle,
     lineHeight: 16,
   },
   appInfo: {
@@ -713,123 +550,39 @@ const styles = StyleSheet.create({
   appInfoText: {
     fontSize: 12,
     fontWeight: '700',
-    color: COLORS.muted,
+    color: colors.muted,
   },
   appInfoSub: {
     fontSize: 10,
-    color: '#94a3b8',
+    color: colors.sectionHeader,
     marginTop: 2,
-  },
-  modalContent: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.line,
-  },
-  modalTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: COLORS.ink,
-  },
-  closeModalBtn: {
-    padding: 6,
-  },
-  modalBody: {
-    padding: 20,
-    flex: 1,
-  },
-  modalDesc: {
-    fontSize: 12,
-    color: '#64748b',
-    lineHeight: 18,
-    marginBottom: 16,
-  },
-  modalLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.ink,
-    marginBottom: 6,
-    marginTop: 10,
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: COLORS.ink,
-    backgroundColor: '#fbfcfd',
   },
   warningBox: {
     flexDirection: 'row',
-    backgroundColor: '#fffbeb',
+    backgroundColor: colors.warningBg,
     borderWidth: 1,
-    borderColor: '#fde68a',
-    borderRadius: 10,
+    borderColor: colors.warningBorder,
+    borderRadius: radii.md,
     borderCurve: 'continuous',
-    padding: 12,
-    gap: 8,
-    marginTop: 16,
+    padding: spacing['6'],
+    gap: spacing['4'],
+    alignItems: 'center',
+    marginTop: spacing['6'],
   },
   warningText: {
-    flex: 1,
     fontSize: 11,
-    color: '#92400e',
+    color: colors.warningText,
     lineHeight: 16,
     fontWeight: '500',
+    flex: 1,
   },
   errorText: {
-    color: COLORS.red,
+    color: colors.red,
     fontSize: 12,
-    marginTop: 10,
+    marginTop: spacing['4'],
     fontWeight: '600',
   },
   modalActions: {
-    marginTop: 24,
-  },
-  primaryActionBtn: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  primaryActionBtnText: {
-    color: COLORS.white,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  btnDisabled: {
-    opacity: 0.6,
-  },
-  toast: {
-    position: 'absolute',
-    bottom: 24,
-    left: 20,
-    right: 20,
-    backgroundColor: '#1a2a48',
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 10px 25px rgba(26, 42, 72, 0.35)',
-    elevation: 6,
-  },
-  toastText: {
-    color: COLORS.white,
-    fontSize: 13,
-    fontWeight: '600',
+    marginTop: spacing['8'],
   },
 });

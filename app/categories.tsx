@@ -3,19 +3,13 @@ import {
   StyleSheet,
   Text,
   View,
-  TextInput,
   Pressable,
   ActivityIndicator,
-  Modal,
   Alert,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
-import { LegendList } from '@legendapp/list/react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { db } from '../db/client';
 import { categories, Category } from '../db/schema';
@@ -29,10 +23,23 @@ import {
 } from '../db/queries/categories';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import {
-  COLORS,
   CATEGORY_PALETTE,
   MAX_CATEGORY_NAME_LENGTH,
 } from '../lib/constants';
+import {
+  colors,
+  radii,
+  spacing,
+  typography,
+  ScreenHeader,
+  SegmentedControl,
+  SectionHeader,
+  CategoryDot,
+  Button,
+  BottomSheetModal,
+  TextInput,
+  Card,
+} from '@/components/ui';
 
 interface CategoryRowProps {
   id: number;
@@ -52,14 +59,13 @@ const CategoryRow = memo(function CategoryRow({
       style={styles.categoryRow}
       onPress={() => onPress(id)}
       accessibilityRole="button"
+      accessibilityLabel={`Kategori ${name}`}
     >
-      <View style={[styles.catDot, { backgroundColor: color || COLORS.primary }]}>
-        <Text style={styles.catDotText}>{name.charAt(0).toUpperCase()}</Text>
-      </View>
+      <CategoryDot color={color || colors.primary} label={name} size="md" />
       <Text style={styles.categoryName} numberOfLines={1}>
         {name}
       </Text>
-      <Ionicons name="chevron-forward" size={18} color="#b5c1d3" style={styles.chevron} />
+      <Ionicons name="chevron-forward" size={18} color={colors.chevron} />
     </Pressable>
   );
 });
@@ -97,7 +103,7 @@ export default function CategoriesScreen() {
       setActiveList(active);
       setArchivedList(archived);
     } catch (e) {
-      console.error('Error loading categories:', e);
+      console.error('Failed to load categories:', e);
     } finally {
       setLoading(false);
     }
@@ -107,16 +113,14 @@ export default function CategoriesScreen() {
     loadData();
   }, [loadData, liveCategories]);
 
-  // Open modal for add
   const handleOpenAdd = () => {
     setEditingCategory(null);
     setFormName('');
-    setFormColor(CATEGORY_PALETTE[activeList.length % CATEGORY_PALETTE.length]);
+    setFormColor(CATEGORY_PALETTE[0]);
     setFormError(null);
     setModalVisible(true);
   };
 
-  // Open modal for edit
   const handleOpenEdit = (id: number) => {
     const cat = activeList.find((c) => c.id === id);
     if (!cat) return;
@@ -127,11 +131,10 @@ export default function CategoriesScreen() {
     setModalVisible(true);
   };
 
-  // Save (add or edit)
   const handleSaveForm = async () => {
     const trimmed = formName.trim();
     if (!trimmed) {
-      setFormError('Isi nama kategori');
+      setFormError('Nama kategori wajib diisi');
       return;
     }
     if (trimmed.length > MAX_CATEGORY_NAME_LENGTH) {
@@ -153,73 +156,57 @@ export default function CategoriesScreen() {
       }
 
       setModalVisible(false);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Gagal menyimpan kategori';
-      setFormError(msg);
+      loadData();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : '';
+      if (msg.includes('sudah digunakan')) {
+        setFormError(msg);
+      } else {
+        setFormError('Gagal menyimpan kategori');
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Archive category
   const handleArchive = async () => {
     if (!editingCategory) return;
     try {
       await archiveCategory(editingCategory.id);
       setShowArchiveConfirm(false);
       setModalVisible(false);
-    } catch (err) {
-      Alert.alert('Gagal', err instanceof Error ? err.message : 'Gagal mengarsipkan');
+      loadData();
+    } catch (e) {
+      Alert.alert('Gagal', 'Tidak dapat mengarsipkan kategori ini');
     }
   };
 
-  // Unarchive category
   const handleUnarchive = async (cat: Category) => {
     try {
       await unarchiveCategory(cat.id);
-    } catch (err) {
-      Alert.alert(
-        'Tidak dapat mengaktifkan',
-        err instanceof Error ? err.message : 'Kategori dengan nama ini sudah aktif'
-      );
+      loadData();
+    } catch (e) {
+      Alert.alert('Gagal', 'Tidak dapat mengaktifkan kembali kategori ini');
     }
   };
-
-  const renderActiveItem = useCallback(
-    ({ item }: { item: Category }) => (
-      <CategoryRow
-        id={item.id}
-        name={item.name}
-        color={item.color || COLORS.primary}
-        onPress={handleOpenEdit}
-      />
-    ),
-    [activeList]
-  );
 
   return (
     <View style={styles.container}>
       {/* Top Header */}
-      <View style={styles.header}>
-        <SafeAreaView edges={['top']} style={styles.headerInner}>
-          <Pressable
-            onPress={() => router.back()}
-            style={styles.backButton}
-            accessibilityLabel="Kembali"
-          >
-            <Ionicons name="arrow-back" size={24} color={COLORS.white} />
-          </Pressable>
-          <Text style={styles.headerTitle}>Kategori</Text>
+      <ScreenHeader
+        title="Kategori"
+        onBack={() => router.back()}
+        rightAction={
           <Pressable
             onPress={handleOpenAdd}
-            style={styles.headerAddBtn}
+            hitSlop={8}
             accessibilityLabel="Tambah Kategori"
             accessibilityRole="button"
           >
-            <Ionicons name="add" size={26} color={COLORS.white} />
+            <Ionicons name="add" size={26} color={colors.white} />
           </Pressable>
-        </SafeAreaView>
-      </View>
+        }
+      />
 
       <ScrollView
         style={styles.contentScroll}
@@ -227,90 +214,70 @@ export default function CategoriesScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Type Toggle */}
-        <View style={styles.segmentedControl}>
-          <Pressable
-            onPress={() => setType('expense')}
-            style={[
-              styles.segmentButton,
-              type === 'expense' ? styles.segmentButtonActive : null,
-            ]}
-          >
-            <Text
-              style={[
-                styles.segmentText,
-                type === 'expense' ? styles.segmentTextActiveExpense : null,
-              ]}
-            >
-              ↗ Keluar
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => setType('income')}
-            style={[
-              styles.segmentButton,
-              type === 'income' ? styles.segmentButtonActive : null,
-            ]}
-          >
-            <Text
-              style={[
-                styles.segmentText,
-                type === 'income' ? styles.segmentTextActiveIncome : null,
-              ]}
-            >
-              ↙ Masuk
-            </Text>
-          </Pressable>
-        </View>
+        <SegmentedControl
+          segments={[
+            { value: 'expense', label: '↗ Keluar' },
+            { value: 'income', label: '↙ Masuk' },
+          ]}
+          selected={type}
+          onChange={setType}
+          colorMap={{ expense: colors.primary, income: colors.green }}
+          style={styles.segmented}
+        />
 
         {/* Section Title */}
-        <View style={styles.sectionTitleRow}>
-          <Text style={styles.sectionTitle}>Kategori saya</Text>
-          <Text style={styles.sectionSubtitle}>{activeList.length} kategori</Text>
-        </View>
+        <SectionHeader
+          title="Kategori saya"
+          rightAction={{ label: `${activeList.length} kategori`, onPress: () => {} }}
+          variant="subtitle"
+        />
 
         {/* Active Categories Card */}
-        <View style={styles.card}>
+        <Card style={styles.listCard}>
           {loading ? (
             <View style={styles.centerLoading}>
-              <ActivityIndicator size="small" color={COLORS.primary} />
+              <ActivityIndicator size="small" color={colors.primary} />
             </View>
           ) : activeList.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>Belum ada kategori aktif.</Text>
             </View>
           ) : (
-            activeList.map((item) => (
-              <CategoryRow
-                key={item.id}
-                id={item.id}
-                name={item.name}
-                color={item.color || COLORS.primary}
-                onPress={handleOpenEdit}
-              />
+            activeList.map((item, index) => (
+              <View key={item.id}>
+                <CategoryRow
+                  id={item.id}
+                  name={item.name}
+                  color={item.color || colors.primary}
+                  onPress={handleOpenEdit}
+                />
+              </View>
             ))
           )}
-        </View>
+        </Card>
 
         {/* Add Category Button */}
-        <Pressable style={styles.addBtn} onPress={handleOpenAdd}>
-          <Ionicons name="add" size={18} color={COLORS.primary} />
-          <Text style={styles.addBtnText}>Tambah kategori</Text>
-        </Pressable>
+        <Button
+          title="Tambah kategori"
+          onPress={handleOpenAdd}
+          variant="dashed"
+          icon={<Ionicons name="add" size={18} color={colors.primary} />}
+          style={styles.addBtn}
+        />
 
         {/* Tip Text Card */}
-        <View style={styles.tipCard}>
+        <Card style={styles.tipCard}>
           <Ionicons
             name="information-circle-outline"
             size={18}
-            color={COLORS.primary}
+            color={colors.primary}
             style={styles.tipIcon}
           />
           <Text style={styles.tipText}>
             Kategori yang sudah dipakai bisa diarsipkan. Catatan transaksi lama tetap tersimpan
             dan terhubung.
           </Text>
-        </View>
+        </Card>
 
         {/* Archived Section */}
         {archivedList.length > 0 ? (
@@ -325,19 +292,17 @@ export default function CategoriesScreen() {
               <Ionicons
                 name={showArchived ? 'chevron-up' : 'chevron-down'}
                 size={18}
-                color={COLORS.muted}
+                color={colors.muted}
               />
             </Pressable>
 
             {showArchived ? (
-              <View style={styles.card}>
+              <Card style={styles.listCard}>
                 {archivedList.map((item) => (
                   <View key={item.id} style={styles.archivedRow}>
-                    <View
-                      style={[
-                        styles.catDotSmall,
-                        { backgroundColor: item.color || COLORS.muted },
-                      ]}
+                    <CategoryDot
+                      color={item.color || colors.muted}
+                      size="sm"
                     />
                     <Text style={styles.archivedName}>{item.name}</Text>
                     <Pressable
@@ -348,101 +313,74 @@ export default function CategoriesScreen() {
                     </Pressable>
                   </View>
                 ))}
-              </View>
+              </Card>
             ) : null}
           </View>
         ) : null}
       </ScrollView>
 
       {/* Add / Edit Category Modal */}
-      <Modal
+      <BottomSheetModal
         visible={modalVisible}
-        presentationStyle="formSheet"
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
+        onClose={() => setModalVisible(false)}
+        title={editingCategory ? 'Ubah Kategori' : 'Kategori Baru'}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.modalContent}
-        >
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
-              {editingCategory ? 'Ubah Kategori' : 'Kategori Baru'}
-            </Text>
-            <Pressable
-              onPress={() => setModalVisible(false)}
-              style={styles.closeModalBtn}
-            >
-              <Ionicons name="close" size={22} color={COLORS.ink} />
-            </Pressable>
-          </View>
+        <TextInput
+          label="Nama kategori"
+          value={formName}
+          onChangeText={(text) => {
+            setFormName(text);
+            if (formError) setFormError(null);
+          }}
+          placeholder="Contoh: Belanja, Kopi"
+          maxLength={MAX_CATEGORY_NAME_LENGTH}
+          charCount={{ current: formName.length, max: MAX_CATEGORY_NAME_LENGTH }}
+          error={formError || undefined}
+          autoFocus
+        />
 
-          <View style={styles.modalBody}>
-            <Text style={styles.modalLabel}>Nama kategori</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={formName}
-              onChangeText={(text) => {
-                setFormName(text);
-                if (formError) setFormError(null);
-              }}
-              placeholder="Contoh: Belanja, Kopi"
-              placeholderTextColor={COLORS.muted}
-              maxLength={MAX_CATEGORY_NAME_LENGTH}
-              autoFocus
-            />
-
-            <Text style={styles.modalLabel}>Warna</Text>
-            <View style={styles.paletteRow}>
-              {CATEGORY_PALETTE.map((color) => {
-                const isSelected = formColor === color;
-                return (
-                  <Pressable
-                    key={color}
-                    onPress={() => setFormColor(color)}
-                    style={[
-                      styles.paletteDot,
-                      { backgroundColor: color },
-                      isSelected ? styles.paletteDotSelected : null,
-                    ]}
-                  >
-                    {isSelected ? (
-                      <Ionicons name="checkmark" size={16} color={COLORS.white} />
-                    ) : null}
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
-
-            {/* Actions */}
-            <View style={styles.modalActions}>
+        <Text style={styles.paletteLabel}>Warna</Text>
+        <View style={styles.paletteRow}>
+          {CATEGORY_PALETTE.map((color) => {
+            const isSelected = formColor === color;
+            return (
               <Pressable
-                style={[styles.saveFormBtn, submitting ? styles.btnDisabled : null]}
-                onPress={handleSaveForm}
-                disabled={submitting}
+                key={color}
+                onPress={() => setFormColor(color)}
+                style={styles.paletteItem}
               >
-                {submitting ? (
-                  <ActivityIndicator size="small" color={COLORS.white} />
-                ) : (
-                  <Text style={styles.saveFormBtnText}>Simpan</Text>
-                )}
+                <CategoryDot
+                  color={color}
+                  size="lg"
+                  selected={isSelected}
+                  style={isSelected ? styles.paletteDotSelected : undefined}
+                />
               </Pressable>
+            );
+          })}
+        </View>
 
-              {editingCategory ? (
-                <Pressable
-                  style={styles.archiveActionBtn}
-                  onPress={() => setShowArchiveConfirm(true)}
-                >
-                  <Ionicons name="archive-outline" size={16} color={COLORS.red} />
-                  <Text style={styles.archiveActionBtnText}>Arsipkan kategori</Text>
-                </Pressable>
-              ) : null}
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        <View style={styles.modalActions}>
+          <Button
+            title="Simpan"
+            onPress={handleSaveForm}
+            variant="primary"
+            fullWidth
+            loading={submitting}
+          />
+
+          {editingCategory ? (
+            <Button
+              title="Arsipkan kategori"
+              onPress={() => setShowArchiveConfirm(true)}
+              variant="ghost"
+              fullWidth
+              textStyle={styles.archiveActionText}
+              icon={<Ionicons name="archive-outline" size={16} color={colors.red} />}
+            />
+          ) : null}
+        </View>
+      </BottomSheetModal>
 
       {/* Confirm Archive Dialog */}
       <ConfirmDialog
@@ -462,153 +400,44 @@ export default function CategoriesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.bg,
-  },
-  header: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  headerInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 8,
-  },
-  backButton: {
-    padding: 6,
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: COLORS.white,
-  },
-  headerAddBtn: {
-    padding: 6,
+    backgroundColor: colors.bg,
   },
   contentScroll: {
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 48,
+    padding: spacing['8'],
+    paddingBottom: spacing['24'],
   },
-  segmentedControl: {
-    flexDirection: 'row',
-    backgroundColor: '#f1f4fa',
-    padding: 4,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    gap: 6,
-    marginBottom: 20,
+  segmented: {
+    marginBottom: spacing['10'],
   },
-  segmentButton: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 9,
-    borderCurve: 'continuous',
-  },
-  segmentButtonActive: {
-    backgroundColor: COLORS.white,
-    boxShadow: '0 2px 7px rgba(220, 227, 239, 0.9)',
-    elevation: 2,
-  },
-  segmentText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#91a0b5',
-  },
-  segmentTextActiveExpense: {
-    color: COLORS.primary,
-  },
-  segmentTextActiveIncome: {
-    color: COLORS.green,
-  },
-  sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-    paddingHorizontal: 2,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.ink,
-  },
-  sectionSubtitle: {
-    fontSize: 11,
-    color: COLORS.muted,
-  },
-  card: {
-    backgroundColor: COLORS.white,
-    borderRadius: 14,
-    borderCurve: 'continuous',
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: COLORS.line,
-    boxShadow: '0 4px 14px rgba(31, 63, 119, 0.04)',
-    elevation: 2,
+  listCard: {
+    paddingHorizontal: spacing['7'],
+    paddingVertical: 0,
   },
   categoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: spacing['6'],
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.line,
-  },
-  catDot: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  catDotText: {
-    color: COLORS.white,
-    fontWeight: '700',
-    fontSize: 13,
+    borderBottomColor: colors.line,
   },
   categoryName: {
     flex: 1,
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.ink,
-    marginLeft: 12,
-  },
-  chevron: {
-    marginLeft: 'auto',
+    ...typography.bodyBold,
+    color: colors.ink,
+    marginLeft: spacing['6'],
   },
   addBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: '#b5c9ef',
-    backgroundColor: '#f8faff',
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    paddingVertical: 14,
-    marginTop: 14,
-    gap: 6,
-  },
-  addBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.primary,
+    marginTop: spacing['7'],
   },
   tipCard: {
     flexDirection: 'row',
-    backgroundColor: '#f4f7fe',
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    padding: 14,
-    marginTop: 16,
-    gap: 10,
+    backgroundColor: colors.surfaceTip,
+    padding: spacing['7'],
+    marginTop: spacing['8'],
+    gap: spacing['5'],
   },
   tipIcon: {
     marginTop: 1,
@@ -616,164 +445,84 @@ const styles = StyleSheet.create({
   tipText: {
     flex: 1,
     fontSize: 11,
-    color: '#8291aa',
+    color: colors.sectionHeader,
     lineHeight: 16,
   },
   archivedSection: {
-    marginTop: 22,
+    marginTop: spacing['11'],
   },
   archivedHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
-    marginBottom: 6,
+    paddingVertical: spacing['4'],
+    marginBottom: spacing['3'],
   },
   archivedTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.muted,
+    ...typography.captionBold,
+    color: colors.muted,
   },
   archivedRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: spacing['6'],
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.line,
-  },
-  catDotSmall: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 10,
+    borderBottomColor: colors.line,
+    gap: spacing['5'],
   },
   archivedName: {
     flex: 1,
-    fontSize: 13,
-    color: COLORS.muted,
-    fontWeight: '600',
+    ...typography.bodySemibold,
+    color: colors.muted,
   },
   restoreBtn: {
-    backgroundColor: COLORS.pale,
+    backgroundColor: colors.primaryPale,
     paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 14,
+    paddingHorizontal: spacing['5'],
+    borderRadius: radii['4xl'],
     borderCurve: 'continuous',
   },
   restoreBtnText: {
     fontSize: 10,
     fontWeight: '700',
-    color: COLORS.primary,
+    color: colors.primary,
   },
   centerLoading: {
-    padding: 24,
+    padding: spacing['12'],
     alignItems: 'center',
   },
   emptyContainer: {
-    padding: 24,
+    padding: spacing['12'],
     alignItems: 'center',
   },
   emptyText: {
-    fontSize: 12,
-    color: COLORS.muted,
+    ...typography.caption,
+    color: colors.muted,
   },
-  modalContent: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.line,
-  },
-  modalTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: COLORS.ink,
-  },
-  closeModalBtn: {
-    padding: 6,
-  },
-  modalBody: {
-    padding: 20,
-    flex: 1,
-  },
-  modalLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.ink,
-    marginBottom: 8,
-    marginTop: 12,
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: COLORS.ink,
-    backgroundColor: '#fbfcfd',
+  paletteLabel: {
+    ...typography.captionBold,
+    color: colors.ink,
+    marginTop: spacing['6'],
+    marginBottom: spacing['4'],
   },
   paletteRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginVertical: 12,
+    gap: spacing['5'],
     flexWrap: 'wrap',
+    marginBottom: spacing['6'],
   },
-  paletteDot: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
+  paletteItem: {
+    padding: 2,
   },
   paletteDotSelected: {
-    borderWidth: 2,
-    borderColor: COLORS.ink,
-  },
-  errorText: {
-    color: COLORS.red,
-    fontSize: 12,
-    marginTop: 8,
-    fontWeight: '600',
+    borderWidth: 2.5,
+    borderColor: colors.ink,
   },
   modalActions: {
-    marginTop: 28,
-    gap: 14,
+    marginTop: spacing['8'],
+    gap: spacing['6'],
   },
-  saveFormBtn: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  saveFormBtnText: {
-    color: COLORS.white,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  archiveActionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    gap: 6,
-  },
-  archiveActionBtnText: {
-    color: COLORS.red,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  btnDisabled: {
-    opacity: 0.6,
+  archiveActionText: {
+    color: colors.red,
   },
 });

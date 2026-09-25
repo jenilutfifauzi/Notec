@@ -1,15 +1,15 @@
 import { Tabs, router } from 'expo-router';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../lib/constants';
+import { colors } from '@/components/ui';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.muted,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.muted,
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabLabel,
       }}
@@ -36,7 +36,7 @@ export default function TabLayout() {
               accessibilityRole="button"
             >
               <View style={styles.addButton}>
-                <Ionicons name="add" size={26} color={COLORS.white} />
+                <Ionicons name="add" size={26} color={colors.white} />
               </View>
             </Pressable>
           ),
@@ -63,9 +63,9 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: COLORS.white,
+    backgroundColor: colors.white,
     borderTopWidth: 1,
-    borderTopColor: COLORS.line,
+    borderTopColor: colors.line,
     height: 64,
     paddingBottom: 8,
     paddingTop: 6,
@@ -81,10 +81,9 @@ const styles = StyleSheet.create({
   },
   addButton: {
     width: 44,
-    height: 40,
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    borderCurve: 'continuous',
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     boxShadow: '0 4px 10px rgba(36, 81, 191, 0.35)',

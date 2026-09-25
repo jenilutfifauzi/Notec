@@ -1,9 +1,17 @@
 import React from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import { ExpenseTrendMonth } from '../db/queries/transactions';
-import { COLORS } from '../lib/constants';
 import { formatCompactRupiah, formatRupiah } from '../lib/format';
+import {
+  colors,
+  radii,
+  spacing,
+  typography,
+  Card,
+  Chip,
+  EmptyState,
+} from '@/components/ui';
 
 interface BarChartCardProps {
   data: ExpenseTrendMonth[];
@@ -31,7 +39,7 @@ export function BarChartCard({
     return {
       value: d.total,
       label: d.label,
-      frontColor: isSelected ? COLORS.primary : COLORS.barInactive,
+      frontColor: isSelected ? colors.primary : colors.primaryBarInactive,
       topRadius: 6,
       topLabelComponent: () =>
         d.total > 0 && isSelected ? (
@@ -44,7 +52,7 @@ export function BarChartCard({
   });
 
   return (
-    <View style={styles.card}>
+    <Card style={styles.card}>
       {/* Header */}
       <View style={styles.header}>
         <View>
@@ -52,19 +60,16 @@ export function BarChartCard({
           <Text style={styles.subtitle}>6 bulan terakhir</Text>
         </View>
         {selectedData ? (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>
-              {selectedData.label}: {formatRupiah(selectedData.total)}
-            </Text>
-          </View>
+          <Chip
+            variant="badge"
+            label={`${selectedData.label}: ${formatRupiah(selectedData.total)}`}
+          />
         ) : null}
       </View>
 
       {/* Content */}
       {allZero ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Belum ada pengeluaran</Text>
-        </View>
+        <EmptyState message="Belum ada pengeluaran" minHeight={120} />
       ) : (
         <View style={styles.chartWrapper}>
           <BarChart
@@ -77,69 +82,39 @@ export function BarChartCard({
             maxValue={maxVal * 1.15}
             yAxisThickness={0}
             xAxisThickness={1}
-            xAxisColor={COLORS.line}
+            xAxisColor={colors.line}
             yAxisTextStyle={styles.axisText}
             xAxisLabelTextStyle={styles.axisText}
             hideYAxisText
             rulesType="dashed"
-            rulesColor="#f0f3f9"
+            rulesColor={colors.surfaceControl}
             height={130}
           />
         </View>
       )}
-    </View>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    borderCurve: 'continuous',
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.line,
-    boxShadow: '0 6px 16px rgba(31, 63, 119, 0.05)',
-    elevation: 2,
-    marginTop: 16,
+    marginTop: spacing['8'],
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: spacing['8'],
   },
   title: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.ink,
-    letterSpacing: -0.3,
+    ...typography.titleSmall,
+    color: colors.ink,
   },
   subtitle: {
-    fontSize: 10,
-    color: COLORS.muted,
+    ...typography.overline,
+    color: colors.muted,
     marginTop: 2,
-  },
-  badge: {
-    backgroundColor: COLORS.pale,
-    borderRadius: 20,
-    borderCurve: 'continuous',
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-  emptyContainer: {
-    height: 120,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 13,
-    color: COLORS.muted,
+    textTransform: 'none',
   },
   chartWrapper: {
     alignItems: 'center',
@@ -147,13 +122,13 @@ const styles = StyleSheet.create({
   },
   axisText: {
     fontSize: 10,
-    color: COLORS.muted,
+    color: colors.muted,
     fontWeight: '600',
   },
   barTopLabel: {
     fontSize: 9,
     fontWeight: '700',
-    color: COLORS.primary,
+    color: colors.primary,
     marginBottom: 4,
     textAlign: 'center',
   },

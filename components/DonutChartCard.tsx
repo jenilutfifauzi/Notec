@@ -3,8 +3,14 @@ import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { PieChart } from 'react-native-gifted-charts';
 import { CategoryExpense } from '../db/queries/transactions';
-import { COLORS } from '../lib/constants';
 import { formatCompactRupiah } from '../lib/format';
+import {
+  colors,
+  spacing,
+  typography,
+  Card,
+  EmptyState,
+} from '@/components/ui';
 
 interface DonutChartCardProps {
   data: CategoryExpense[];
@@ -37,7 +43,7 @@ export function DonutChartCard({
     displaySlices.push({
       categoryIds: [cat.categoryId],
       name: cat.categoryName,
-      color: cat.color || COLORS.primary,
+      color: cat.color || colors.primary,
       total: cat.total,
       percentage,
     });
@@ -49,7 +55,7 @@ export function DonutChartCard({
     displaySlices.push({
       categoryIds: otherCategories.map((c) => c.categoryId),
       name: 'Kategori lain',
-      color: '#8190a8',
+      color: colors.muted,
       total: otherTotal,
       percentage: otherPercentage,
     });
@@ -64,7 +70,7 @@ export function DonutChartCard({
   }));
 
   return (
-    <View style={styles.card}>
+    <Card style={styles.card}>
       {/* Header */}
       <View style={styles.header}>
         <View>
@@ -82,9 +88,7 @@ export function DonutChartCard({
 
       {/* Content */}
       {!hasExpenses ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Belum ada pengeluaran</Text>
-        </View>
+        <EmptyState message="Belum ada pengeluaran" minHeight={120} />
       ) : (
         <View style={styles.contentRow}>
           {/* Donut Chart */}
@@ -94,7 +98,7 @@ export function DonutChartCard({
               donut
               radius={55}
               innerRadius={36}
-              innerCircleColor={COLORS.white}
+              innerCircleColor={colors.white}
               centerLabelComponent={() => (
                 <View style={styles.centerLabel}>
                   <Text style={styles.centerTotalText}>
@@ -126,58 +130,40 @@ export function DonutChartCard({
           </View>
         </View>
       )}
-    </View>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    borderCurve: 'continuous',
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.line,
-    boxShadow: '0 6px 16px rgba(31, 63, 119, 0.05)',
-    elevation: 2,
-    marginTop: 16,
+    marginTop: spacing['8'],
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: spacing['8'],
   },
   manageLinkText: {
     fontSize: 11,
     fontWeight: '700',
-    color: COLORS.primary,
+    color: colors.primary,
   },
   title: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.ink,
-    letterSpacing: -0.3,
+    ...typography.titleSmall,
+    color: colors.ink,
   },
   subtitle: {
-    fontSize: 10,
-    color: COLORS.muted,
+    ...typography.overline,
+    color: colors.muted,
     marginTop: 2,
-  },
-  emptyContainer: {
-    height: 120,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 13,
-    color: COLORS.muted,
+    textTransform: 'none',
   },
   contentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 4,
+    paddingVertical: spacing['2'],
   },
   donutWrapper: {
     alignItems: 'center',
@@ -191,13 +177,13 @@ const styles = StyleSheet.create({
   centerTotalText: {
     fontSize: 10,
     fontWeight: '800',
-    color: COLORS.ink,
+    color: colors.ink,
     textAlign: 'center',
   },
   legendContainer: {
     flex: 1,
-    marginLeft: 16,
-    gap: 8,
+    marginLeft: spacing['8'],
+    gap: spacing['4'],
   },
   legendRow: {
     flexDirection: 'row',
@@ -208,18 +194,18 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    marginRight: 8,
+    marginRight: spacing['4'],
   },
   legendName: {
     flex: 1,
     fontSize: 12,
     fontWeight: '600',
-    color: COLORS.ink,
+    color: colors.ink,
   },
   legendPercent: {
     fontSize: 12,
     fontWeight: '700',
-    color: COLORS.muted,
-    marginLeft: 6,
+    color: colors.muted,
+    marginLeft: spacing['3'],
   },
 });
