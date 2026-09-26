@@ -19,7 +19,7 @@ import {
   updateTransaction,
   getTransactionById,
 } from '../db/queries/transactions';
-import { CategoryPickerModal } from '../components/CategoryPickerModal';
+import CategoryPickerModal from '@/components/organisms/CategoryPickerModal';
 import { MAX_AMOUNT, MAX_NOTE_LENGTH } from '../lib/constants';
 import {
   rupiahFormatter,

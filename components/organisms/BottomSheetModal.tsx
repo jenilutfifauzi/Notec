@@ -27,7 +27,7 @@ export interface BottomSheetModalProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function BottomSheetModal({
+export default function BottomSheetModal({
   visible,
   onClose,
   title,

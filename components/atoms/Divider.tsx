@@ -8,7 +8,7 @@ export interface DividerProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function Divider({
+export default function Divider({
   spacing: marginSpacing,
   color = colors.line,
   style,

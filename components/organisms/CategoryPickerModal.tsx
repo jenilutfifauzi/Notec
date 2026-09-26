@@ -8,19 +8,14 @@ import {
 } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Category } from '../db/schema';
-import { getActiveCategories, insertCategory } from '../db/queries/categories';
-import { CATEGORY_PALETTE, MAX_CATEGORY_NAME_LENGTH } from '../lib/constants';
-import {
-  colors,
-  radii,
-  spacing,
-  typography,
-  BottomSheetModal,
-  CategoryDot,
-  TextInput,
-  Button,
-} from '@/components/ui';
+import { Category } from '@/db/schema';
+import { getActiveCategories, insertCategory } from '@/db/queries/categories';
+import { CATEGORY_PALETTE, MAX_CATEGORY_NAME_LENGTH } from '@/lib/constants';
+import { colors, radii, spacing, typography } from '@/lib/tokens';
+import CategoryDot from '@/components/atoms/CategoryDot';
+import Button from '@/components/atoms/Button';
+import TextInput from '@/components/molecules/TextInput';
+import BottomSheetModal from './BottomSheetModal';
 
 export interface CategoryPickerModalProps {
   visible: boolean;
@@ -31,7 +26,7 @@ export interface CategoryPickerModalProps {
   onManageCategories?: () => void;
 }
 
-export function CategoryPickerModal({
+export default function CategoryPickerModal({
   visible,
   type,
   selectedId,

@@ -17,7 +17,7 @@ export interface FormFieldProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function FormField({
+export default function FormField({
   label,
   error,
   errorMode = 'text',

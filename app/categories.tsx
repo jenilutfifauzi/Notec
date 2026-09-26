@@ -21,7 +21,7 @@ import {
   archiveCategory,
   unarchiveCategory,
 } from '../db/queries/categories';
-import { ConfirmDialog } from '../components/ConfirmDialog';
+import ConfirmDialog from '@/components/organisms/ConfirmDialog';
 import {
   CATEGORY_PALETTE,
   MAX_CATEGORY_NAME_LENGTH,

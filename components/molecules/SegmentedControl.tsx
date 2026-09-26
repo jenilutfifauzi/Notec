@@ -22,7 +22,7 @@ export interface SegmentedControlProps<T extends string> {
   style?: StyleProp<ViewStyle>;
 }
 
-export function SegmentedControl<T extends string>({
+export default function SegmentedControl<T extends string>({
   segments,
   selected,
   onChange,

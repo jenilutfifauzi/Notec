@@ -8,16 +8,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { formatDateShort } from '../lib/format';
-import {
-  colors,
-  radii,
-  spacing,
-  typography,
-  BottomSheetModal,
-  Chip,
-  Button,
-} from '@/components/ui';
+import { formatDateShort } from '@/lib/format';
+import { colors, radii, spacing, typography } from '@/lib/tokens';
+import Chip from '@/components/atoms/Chip';
+import Button from '@/components/atoms/Button';
+import BottomSheetModal from './BottomSheetModal';
 
 export type DatePresetKey = 'today' | '7days' | '30days' | 'thisMonth' | 'lastMonth' | 'custom';
 
@@ -67,7 +62,7 @@ function parseDateString(s: string): Date {
   return new Date(y, m - 1, d);
 }
 
-export function DateFilterModal({
+export default function DateFilterModal({
   visible,
   onClose,
   year,

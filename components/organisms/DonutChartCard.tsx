@@ -2,23 +2,19 @@ import React from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { PieChart } from 'react-native-gifted-charts';
-import { CategoryExpense } from '../db/queries/transactions';
-import { formatCompactRupiah } from '../lib/format';
-import {
-  colors,
-  spacing,
-  typography,
-  Card,
-  EmptyState,
-} from '@/components/ui';
+import { CategoryExpense } from '@/db/queries/transactions';
+import { formatCompactRupiah } from '@/lib/format';
+import { colors, spacing, typography } from '@/lib/tokens';
+import Card from '@/components/atoms/Card';
+import EmptyState from '@/components/molecules/EmptyState';
 
-interface DonutChartCardProps {
+export interface DonutChartCardProps {
   data: CategoryExpense[];
   monthExpenseTotal: number;
   onSelectCategory?: (categoryIds: number[]) => void;
 }
 
-export function DonutChartCard({
+export default function DonutChartCard({
   data,
   monthExpenseTotal,
   onSelectCategory,

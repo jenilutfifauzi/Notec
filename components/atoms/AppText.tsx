@@ -10,7 +10,7 @@ export interface AppTextProps extends RNTextProps {
   tabularNums?: boolean;
 }
 
-export function AppText({
+export default function AppText({
   variant = 'body',
   color = colors.ink,
   tabularNums = false,

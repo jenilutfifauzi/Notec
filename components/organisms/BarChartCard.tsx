@@ -1,26 +1,21 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
-import { ExpenseTrendMonth } from '../db/queries/transactions';
-import { formatCompactRupiah, formatRupiah } from '../lib/format';
-import {
-  colors,
-  radii,
-  spacing,
-  typography,
-  Card,
-  Chip,
-  EmptyState,
-} from '@/components/ui';
+import { ExpenseTrendMonth } from '@/db/queries/transactions';
+import { formatCompactRupiah, formatRupiah } from '@/lib/format';
+import { colors, radii, spacing, typography } from '@/lib/tokens';
+import Card from '@/components/atoms/Card';
+import Chip from '@/components/atoms/Chip';
+import EmptyState from '@/components/molecules/EmptyState';
 
-interface BarChartCardProps {
+export interface BarChartCardProps {
   data: ExpenseTrendMonth[];
   selectedYear: number;
   selectedMonth: number;
   onPressMonth?: (year: number, month: number) => void;
 }
 
-export function BarChartCard({
+export default function BarChartCard({
   data,
   selectedYear,
   selectedMonth,

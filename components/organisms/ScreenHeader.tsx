@@ -21,7 +21,7 @@ export interface ScreenHeaderProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function ScreenHeader({
+export default function ScreenHeader({
   title,
   onBack,
   rightAction,

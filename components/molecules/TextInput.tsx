@@ -23,7 +23,7 @@ export interface TextInputProps extends RNTextInputProps {
   containerStyle?: StyleProp<ViewStyle>;
 }
 
-export function TextInput({
+export default function TextInput({
   label,
   error,
   charCount,

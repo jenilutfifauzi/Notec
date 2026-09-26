@@ -29,7 +29,7 @@ export interface ButtonProps {
   textStyle?: StyleProp<TextStyle>;
 }
 
-export function Button({
+export default function Button({
   title,
   onPress,
   variant = 'primary',

@@ -21,7 +21,7 @@ import {
   BackupData,
 } from '../db/queries/backup';
 import { encryptBackup, decryptBackup } from '../lib/crypto';
-import { ConfirmDialog } from '../components/ConfirmDialog';
+import ConfirmDialog from '@/components/organisms/ConfirmDialog';
 import {
   colors,
   radii,

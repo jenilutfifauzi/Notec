@@ -18,7 +18,7 @@ export interface CardProps {
   accessibilityLabel?: string;
 }
 
-export function Card({
+export default function Card({
   children,
   style,
   variant = 'default',

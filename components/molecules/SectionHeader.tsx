@@ -18,7 +18,7 @@ export interface SectionHeaderProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function SectionHeader({
+export default function SectionHeader({
   title,
   rightAction,
   variant = 'subtitle',

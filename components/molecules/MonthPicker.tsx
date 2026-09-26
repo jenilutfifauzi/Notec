@@ -1,10 +1,10 @@
 import React from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { monthYearFormatter } from '../lib/format';
-import { colors, radii, typography } from '@/components/ui';
+import { monthYearFormatter } from '@/lib/format';
+import { colors, radii, typography } from '@/lib/tokens';
 
-interface MonthPickerProps {
+export interface MonthPickerProps {
   year: number;
   month: number; // 1 to 12
   onChange: (year: number, month: number) => void;
@@ -15,7 +15,7 @@ interface MonthPickerProps {
   onClearCustomFilter?: () => void;
 }
 
-export function MonthPicker({
+export default function MonthPicker({
   year,
   month,
   onChange,

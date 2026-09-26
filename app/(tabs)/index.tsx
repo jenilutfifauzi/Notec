@@ -23,10 +23,10 @@ import {
   CategoryExpense,
   TransactionWithCategory,
 } from '../../db/queries/transactions';
-import { MonthPicker } from '../../components/MonthPicker';
-import { BarChartCard } from '../../components/BarChartCard';
-import { DonutChartCard } from '../../components/DonutChartCard';
-import { TransactionItem } from '../../components/TransactionItem';
+import MonthPicker from '@/components/molecules/MonthPicker';
+import TransactionItem from '@/components/molecules/TransactionItem';
+import BarChartCard from '@/components/organisms/BarChartCard';
+import DonutChartCard from '@/components/organisms/DonutChartCard';
 import { formatRupiah } from '../../lib/format';
 import {
   colors,

@@ -10,7 +10,6 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { LegendList } from '@legendapp/list/react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { DateFilterModal, DatePresetKey, DateFilterSelection } from '../../components/DateFilterModal';
 import { db } from '../../db/client';
 import { transactions, Category } from '../../db/schema';
 import {
@@ -19,10 +18,11 @@ import {
   restoreTransaction,
   TransactionWithCategory,
 } from '../../db/queries/transactions';
-import { MonthPicker } from '../../components/MonthPicker';
-import { TransactionItem } from '../../components/TransactionItem';
-import { CategoryPickerModal } from '../../components/CategoryPickerModal';
-import { ConfirmDialog } from '../../components/ConfirmDialog';
+import MonthPicker from '@/components/molecules/MonthPicker';
+import TransactionItem from '@/components/molecules/TransactionItem';
+import DateFilterModal, { type DatePresetKey, type DateFilterSelection } from '@/components/organisms/DateFilterModal';
+import CategoryPickerModal from '@/components/organisms/CategoryPickerModal';
+import ConfirmDialog from '@/components/organisms/ConfirmDialog';
 import { formatSectionDate, formatDateShort, formatRupiah } from '../../lib/format';
 import {
   colors,

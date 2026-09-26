@@ -17,7 +17,7 @@ export interface EmptyStateProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function EmptyState({
+export default function EmptyState({
   message,
   action,
   minHeight = 120,

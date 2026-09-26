@@ -22,7 +22,7 @@ export interface ChipProps {
   textStyle?: StyleProp<TextStyle>;
 }
 
-export function Chip({
+export default function Chip({
   label,
   active = false,
   onPress,

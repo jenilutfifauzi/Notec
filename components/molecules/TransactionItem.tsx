@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
-import { formatRupiah, formatDate } from '../lib/format';
-import { colors, radii, spacing, typography, AppText } from '@/components/ui';
+import { formatRupiah, formatDate } from '@/lib/format';
+import { colors, radii, spacing, typography } from '@/lib/tokens';
+import AppText from '@/components/atoms/AppText';
 
 export interface TransactionItemProps {
   id: number;
@@ -15,7 +16,7 @@ export interface TransactionItemProps {
   onLongPress?: (id: number) => void;
 }
 
-export const TransactionItem = memo(function TransactionItem({
+const TransactionItem = memo(function TransactionItem({
   id,
   note,
   categoryName,
@@ -79,6 +80,8 @@ export const TransactionItem = memo(function TransactionItem({
     </Pressable>
   );
 });
+
+export default TransactionItem;
 
 const styles = StyleSheet.create({
   container: {

@@ -18,7 +18,7 @@ export interface ToastProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function Toast({
+export default function Toast({
   visible,
   message,
   action,

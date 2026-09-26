@@ -13,7 +13,7 @@ export interface CategoryDotProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function CategoryDot({
+export default function CategoryDot({
   color,
   label,
   size = 'md',

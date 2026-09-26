@@ -6,7 +6,8 @@ import {
   StyleSheet,
   Pressable,
 } from 'react-native';
-import { colors, radii, spacing, typography, Button } from '@/components/ui';
+import { colors, radii, spacing, typography } from '@/lib/tokens';
+import Button from '@/components/atoms/Button';
 
 export interface ConfirmDialogProps {
   visible: boolean;
@@ -19,7 +20,7 @@ export interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-export function ConfirmDialog({
+export default function ConfirmDialog({
   visible,
   title,
   message,

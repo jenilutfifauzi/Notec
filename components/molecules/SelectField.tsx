@@ -21,7 +21,7 @@ export interface SelectFieldProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function SelectField({
+export default function SelectField({
   label,
   value,
   placeholder,
