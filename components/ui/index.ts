@@ -4,6 +4,8 @@ export * from '@/lib/tokens';
 // Atoms
 export { default as AppText } from '@/components/atoms/AppText';
 export type { AppTextProps, TypographyVariant } from '@/components/atoms/AppText';
+export { default as BottomSheetWrapper } from '@/components/atoms/BottomSheetWrapper';
+export type { BottomSheetWrapperProps } from '@/components/atoms/BottomSheetWrapper';
 export { default as Button } from '@/components/atoms/Button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from '@/components/atoms/Button';
 export { default as Card } from '@/components/atoms/Card';

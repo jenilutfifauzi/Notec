@@ -1,4 +1,6 @@
 import { Stack } from 'expo-router';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, StyleSheet, Text, View, Pressable } from 'react-native';
 import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
@@ -38,6 +40,14 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => voi
 }
 
 export default function RootLayout() {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <RootLayoutInner />
+    </GestureHandlerRootView>
+  );
+}
+
+function RootLayoutInner() {
   const initError = getDbInitError();
 
   if (initError) {
@@ -105,38 +115,38 @@ function RootLayoutContent() {
   }
 
   return (
-    <>
-      <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.bg },
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="record"
-          options={{
-            presentation: 'modal',
+    <BottomSheetModalProvider>
+        <StatusBar style="light" />
+        <Stack
+          screenOptions={{
             headerShown: false,
+            contentStyle: { backgroundColor: colors.bg },
           }}
-        />
-        <Stack.Screen
-          name="categories"
-          options={{
-            presentation: 'card',
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="settings"
-          options={{
-            presentation: 'card',
-            headerShown: false,
-          }}
-        />
-      </Stack>
-    </>
+        >
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="record"
+            options={{
+              presentation: 'modal',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="categories"
+            options={{
+              presentation: 'card',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="settings"
+            options={{
+              presentation: 'card',
+              headerShown: false,
+            }}
+          />
+        </Stack>
+    </BottomSheetModalProvider>
   );
 }
 

@@ -119,6 +119,7 @@ export default function CategoryPickerModal({
       visible={visible}
       onClose={onClose}
       title={isCreating ? 'Kategori Baru' : 'Pilih Kategori'}
+      scrollable={false}
     >
       {isCreating ? (
         /* Create Mode */

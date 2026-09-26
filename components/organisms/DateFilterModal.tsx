@@ -7,7 +7,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerChangeEvent } from '@react-native-community/datetimepicker';
 import { formatDateShort } from '@/lib/format';
 import { colors, radii, spacing, typography } from '@/lib/tokens';
 import Chip from '@/components/atoms/Chip';
@@ -178,12 +178,12 @@ export default function DateFilterModal({
     setDraftPreset(undefined);
   };
 
-  const handlePickerChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+  const handlePickerValueChange = (
+    _event: DateTimePickerChangeEvent,
+    selectedDate: Date
+  ) => {
     if (Platform.OS === 'android') {
       setPickerTarget(null);
-    }
-    if (event.type === 'dismissed' || !selectedDate) {
-      return;
     }
 
     const dateStr = toDateString(selectedDate);
@@ -199,6 +199,12 @@ export default function DateFilterModal({
       if (draftFrom && dateStr < draftFrom) {
         setDraftFrom(dateStr);
       }
+    }
+  };
+
+  const handlePickerDismiss = () => {
+    if (Platform.OS === 'android') {
+      setPickerTarget(null);
     }
   };
 
@@ -410,7 +416,8 @@ export default function DateFilterModal({
               value={activePickerDate}
               mode="date"
               display="spinner"
-              onChange={handlePickerChange}
+              onValueChange={handlePickerValueChange}
+              onDismiss={handlePickerDismiss}
               maximumDate={pickerTarget === 'from' && draftTo ? parseDateString(draftTo) : undefined}
               minimumDate={pickerTarget === 'to' && draftFrom ? parseDateString(draftFrom) : undefined}
             />
@@ -424,7 +431,8 @@ export default function DateFilterModal({
           value={activePickerDate}
           mode="date"
           display="default"
-          onChange={handlePickerChange}
+          onValueChange={handlePickerValueChange}
+          onDismiss={handlePickerDismiss}
           maximumDate={pickerTarget === 'from' && draftTo ? parseDateString(draftTo) : undefined}
           minimumDate={pickerTarget === 'to' && draftFrom ? parseDateString(draftFrom) : undefined}
         />

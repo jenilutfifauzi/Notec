@@ -1,13 +1,8 @@
 import React from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-} from 'react-native';
-import { colors, radii, spacing, typography } from '@/lib/tokens';
+import { View, Text, StyleSheet } from 'react-native';
+import { colors, spacing, typography } from '@/lib/tokens';
 import Button from '@/components/atoms/Button';
+import BottomSheetWrapper from '@/components/atoms/BottomSheetWrapper';
 
 export interface ConfirmDialogProps {
   visible: boolean;
@@ -31,74 +26,46 @@ export default function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   return (
-    <Modal
+    <BottomSheetWrapper
       visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onCancel}
+      onClose={onCancel}
+      title={title}
+      scrollable={false}
     >
-      <Pressable style={styles.overlay} onPress={onCancel}>
-        <Pressable style={styles.dialog} onPress={(e) => e.stopPropagation()}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.message}>{message}</Text>
+      <Text style={styles.message}>{message}</Text>
 
-          <View style={styles.actionRow}>
-            <Button
-              title={cancelText}
-              onPress={onCancel}
-              variant="outline"
-              size="md"
-              style={styles.flexBtn}
-            />
+      <View style={styles.actionRow}>
+        <Button
+          title={cancelText}
+          onPress={onCancel}
+          variant="outline"
+          size="md"
+          style={styles.flexBtn}
+        />
 
-            <Button
-              title={confirmText}
-              onPress={onConfirm}
-              variant={destructive ? 'destructive' : 'primary'}
-              size="md"
-              style={styles.flexBtn}
-            />
-          </View>
-        </Pressable>
-      </Pressable>
-    </Modal>
+        <Button
+          title={confirmText}
+          onPress={onConfirm}
+          variant={destructive ? 'destructive' : 'primary'}
+          size="md"
+          style={styles.flexBtn}
+        />
+      </View>
+    </BottomSheetWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: colors.overlayDark,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing['12'],
-  },
-  dialog: {
-    width: '100%',
-    maxWidth: 340,
-    backgroundColor: colors.white,
-    borderRadius: radii['3xl'],
-    borderCurve: 'continuous',
-    padding: spacing['11'],
-    boxShadow: '0 20px 40px rgba(28, 44, 75, 0.25)',
-    elevation: 6,
-  },
-  title: {
-    ...typography.title,
-    fontSize: 16,
-    color: colors.ink,
-    marginBottom: spacing['4'],
-  },
   message: {
     ...typography.body,
-    fontSize: 13,
+    fontSize: 14,
     color: colors.subtle,
-    lineHeight: 19,
-    marginBottom: spacing['10'],
+    lineHeight: 20,
+    marginBottom: spacing['6'],
   },
   actionRow: {
     flexDirection: 'row',
-    gap: spacing['5'],
+    gap: spacing['3'],
   },
   flexBtn: {
     flex: 1,

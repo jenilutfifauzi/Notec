@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerChangeEvent } from '@react-native-community/datetimepicker';
 import { Category } from '../db/schema';
 import {
   insertTransaction,
@@ -126,19 +126,20 @@ export default function RecordScreen() {
   };
 
   // Handle Date picker change
-  const onDateChange = (event: DateTimePickerEvent, selected?: Date) => {
+  const handleDateValueChange = (_event: DateTimePickerChangeEvent, selected: Date) => {
     if (Platform.OS === 'android') {
       setShowDatePicker(false);
     }
-    if (event.type === 'dismissed') {
-      return;
-    }
-    if (selected) {
-      setDateObj(selected);
-      const year = selected.getFullYear();
-      const month = String(selected.getMonth() + 1).padStart(2, '0');
-      const day = String(selected.getDate()).padStart(2, '0');
-      setDateStr(`${year}-${month}-${day}`);
+    setDateObj(selected);
+    const year = selected.getFullYear();
+    const month = String(selected.getMonth() + 1).padStart(2, '0');
+    const day = String(selected.getDate()).padStart(2, '0');
+    setDateStr(`${year}-${month}-${day}`);
+  };
+
+  const handleDateDismiss = () => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
     }
   };
 
@@ -281,7 +282,8 @@ export default function RecordScreen() {
                 value={dateObj}
                 mode="date"
                 display="spinner"
-                onChange={onDateChange}
+                onValueChange={handleDateValueChange}
+                onDismiss={handleDateDismiss}
               />
               <Button
                 title="Selesai"
@@ -295,7 +297,8 @@ export default function RecordScreen() {
               value={dateObj}
               mode="date"
               display="default"
-              onChange={onDateChange}
+              onValueChange={handleDateValueChange}
+              onDismiss={handleDateDismiss}
             />
           )
         ) : null}
