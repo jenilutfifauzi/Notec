@@ -443,6 +443,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   tipText: {
+    ...typography.caption,
     flex: 1,
     fontSize: 11,
     color: colors.sectionHeader,
@@ -483,9 +484,9 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
   },
   restoreBtnText: {
-    fontSize: 10,
-    fontWeight: '700',
+    ...typography.overline,
     color: colors.primary,
+    textTransform: 'none',
   },
   centerLoading: {
     padding: spacing['12'],

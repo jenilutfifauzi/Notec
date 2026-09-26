@@ -8,7 +8,7 @@ import {
   StyleProp,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radii, spacing, typography } from '@/lib/tokens';
+import { colors, radii, spacing, typography, fontFamilies } from '@/lib/tokens';
 
 export interface SelectFieldProps {
   label?: string;
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   },
   valueText: {
     color: colors.ink,
-    fontWeight: '500',
+    fontFamily: fontFamilies.medium,
   },
   placeholderText: {
     color: colors.placeholder,

@@ -475,8 +475,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   yearText: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...typography.label,
     color: colors.ink,
     minWidth: 42,
     textAlign: 'center',
@@ -508,17 +507,17 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   monthCellText: {
+    ...typography.bodySemibold,
     fontSize: 13,
-    fontWeight: '600',
     color: colors.ink,
   },
   monthCellTextActive: {
+    ...typography.label,
     color: colors.white,
-    fontWeight: '700',
   },
   monthCellTextCurrent: {
+    ...typography.label,
     color: colors.primary,
-    fontWeight: '700',
   },
   customRangeRow: {
     flexDirection: 'row',
@@ -550,14 +549,14 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   dateBoxValue: {
+    ...typography.bodySemibold,
     fontSize: 13,
-    fontWeight: '600',
     color: colors.muted,
     fontVariant: ['tabular-nums'],
   },
   dateBoxValueActive: {
+    ...typography.label,
     color: colors.ink,
-    fontWeight: '700',
   },
   iosPickerCard: {
     marginTop: 10,
@@ -576,8 +575,7 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   iosPickerTitle: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...typography.label,
     color: colors.ink,
   },
   footer: {

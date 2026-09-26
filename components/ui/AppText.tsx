@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text as RNText, TextProps as RNTextProps, StyleSheet } from 'react-native';
-import { colors, typography } from '@/lib/tokens';
+import { colors, typography, fontFamilies } from '@/lib/tokens';
 
 export type TypographyVariant = keyof typeof typography;
 
@@ -22,6 +22,7 @@ export function AppText({
   return (
     <RNText
       style={[
+        styles.base,
         typeStyle,
         { color },
         tabularNums && styles.tabular,
@@ -33,6 +34,9 @@ export function AppText({
 }
 
 const styles = StyleSheet.create({
+  base: {
+    fontFamily: fontFamilies.regular,
+  },
   tabular: {
     fontVariant: ['tabular-nums'],
   },

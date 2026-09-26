@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { monthYearFormatter } from '../lib/format';
-import { colors, radii } from '@/components/ui';
+import { colors, radii, typography } from '@/components/ui';
 
 interface MonthPickerProps {
   year: number;
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   monthText: {
-    fontWeight: '700',
+    ...typography.captionBold,
     textTransform: 'capitalize',
   },
   heroText: {
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   lightText: {
+    ...typography.titleSmall,
     color: colors.ink,
-    fontSize: 14,
   },
 });

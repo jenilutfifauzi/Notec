@@ -121,15 +121,16 @@ const styles = StyleSheet.create({
     marginLeft: -10,
   },
   axisText: {
+    ...typography.small,
     fontSize: 10,
     color: colors.muted,
-    fontWeight: '600',
   },
   barTopLabel: {
+    ...typography.overline,
     fontSize: 9,
-    fontWeight: '700',
     color: colors.primary,
     marginBottom: 4,
     textAlign: 'center',
+    textTransform: 'none',
   },
 });

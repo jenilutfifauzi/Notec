@@ -1,7 +1,7 @@
 import { Tabs, router } from 'expo-router';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '@/components/ui';
+import { colors, typography } from '@/components/ui';
 
 export default function TabLayout() {
   return (
@@ -71,8 +71,7 @@ const styles = StyleSheet.create({
     paddingTop: 6,
   },
   tabLabel: {
-    fontSize: 11,
-    fontWeight: '600',
+    ...typography.small,
   },
   centerButtonContainer: {
     flex: 1,

@@ -89,6 +89,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing['4'],
   },
   message: {
+    ...typography.body,
     fontSize: 13,
     color: colors.subtle,
     lineHeight: 19,

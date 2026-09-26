@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 export const colors = {
   // Brand
   primary: '#2451bf',
@@ -98,20 +100,78 @@ export const spacing = {
   '24': 48,
 } as const;
 
+export const fontFamilies = {
+  regular: 'Inter_400Regular',
+  medium: 'Inter_500Medium',
+  semiBold: 'Inter_600SemiBold',
+  bold: 'Inter_700Bold',
+  extraBold: 'Inter_800ExtraBold',
+  black: 'Inter_900Black',
+} as const;
+
+// On Android, custom fonts loaded via expo-font are registered under Typeface.NORMAL.
+// Specifying bold/numeric weights on Android causes React Native to look up non-existent
+// variants and silently fall back to the system font (Roboto).
+const isAndroid = Platform.OS === 'android';
+
 export const typography = {
-  displayLarge: { fontSize: 32, fontWeight: '800' as const, letterSpacing: -0.8 },
-  title: { fontSize: 17, fontWeight: '700' as const, letterSpacing: -0.3 },
-  titleSmall: { fontSize: 14, fontWeight: '700' as const, letterSpacing: -0.3 },
-  body: { fontSize: 14, fontWeight: '400' as const },
-  bodySemibold: { fontSize: 14, fontWeight: '600' as const },
-  bodyBold: { fontSize: 14, fontWeight: '700' as const },
-  label: { fontSize: 13, fontWeight: '700' as const },
-  caption: { fontSize: 12, fontWeight: '600' as const },
-  captionBold: { fontSize: 12, fontWeight: '700' as const },
-  small: { fontSize: 11, fontWeight: '600' as const },
+  displayLarge: {
+    fontFamily: fontFamilies.extraBold,
+    fontSize: 32,
+    fontWeight: isAndroid ? undefined : ('800' as const),
+    letterSpacing: -0.8,
+  },
+  title: {
+    fontFamily: fontFamilies.bold,
+    fontSize: 17,
+    fontWeight: isAndroid ? undefined : ('700' as const),
+    letterSpacing: -0.3,
+  },
+  titleSmall: {
+    fontFamily: fontFamilies.bold,
+    fontSize: 14,
+    fontWeight: isAndroid ? undefined : ('700' as const),
+    letterSpacing: -0.3,
+  },
+  body: {
+    fontFamily: fontFamilies.regular,
+    fontSize: 14,
+    fontWeight: isAndroid ? undefined : ('400' as const),
+  },
+  bodySemibold: {
+    fontFamily: fontFamilies.semiBold,
+    fontSize: 14,
+    fontWeight: isAndroid ? undefined : ('600' as const),
+  },
+  bodyBold: {
+    fontFamily: fontFamilies.bold,
+    fontSize: 14,
+    fontWeight: isAndroid ? undefined : ('700' as const),
+  },
+  label: {
+    fontFamily: fontFamilies.bold,
+    fontSize: 13,
+    fontWeight: isAndroid ? undefined : ('700' as const),
+  },
+  caption: {
+    fontFamily: fontFamilies.semiBold,
+    fontSize: 12,
+    fontWeight: isAndroid ? undefined : ('600' as const),
+  },
+  captionBold: {
+    fontFamily: fontFamilies.bold,
+    fontSize: 12,
+    fontWeight: isAndroid ? undefined : ('700' as const),
+  },
+  small: {
+    fontFamily: fontFamilies.semiBold,
+    fontSize: 11,
+    fontWeight: isAndroid ? undefined : ('600' as const),
+  },
   overline: {
+    fontFamily: fontFamilies.extraBold,
     fontSize: 10,
-    fontWeight: '800' as const,
+    fontWeight: isAndroid ? undefined : ('800' as const),
     letterSpacing: 0.6,
     textTransform: 'uppercase' as const,
   },

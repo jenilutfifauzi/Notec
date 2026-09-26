@@ -7,7 +7,7 @@ import {
   ViewStyle,
   StyleProp,
 } from 'react-native';
-import { colors, radii, spacing } from '@/lib/tokens';
+import { colors, radii, spacing, typography } from '@/lib/tokens';
 
 export interface SegmentItem<T extends string> {
   value: T;
@@ -80,8 +80,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   segmentText: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...typography.label,
   },
   segmentTextInactive: {
     color: colors.muted,

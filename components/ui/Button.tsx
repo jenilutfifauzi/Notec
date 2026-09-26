@@ -8,8 +8,9 @@ import {
   TextStyle,
   StyleProp,
   View,
+  Platform,
 } from 'react-native';
-import { colors, radii, shadows } from '@/lib/tokens';
+import { colors, radii, shadows, fontFamilies } from '@/lib/tokens';
 
 export type ButtonVariant = 'primary' | 'outline' | 'destructive' | 'dashed' | 'ghost';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -156,7 +157,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   baseText: {
-    fontWeight: '700',
+    fontFamily: fontFamilies.bold,
+    fontWeight: Platform.OS === 'android' ? undefined : '700',
   },
   primary: {
     backgroundColor: colors.primary,

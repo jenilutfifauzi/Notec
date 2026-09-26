@@ -145,8 +145,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing['8'],
   },
   manageLinkText: {
+    ...typography.captionBold,
     fontSize: 11,
-    fontWeight: '700',
     color: colors.primary,
   },
   title: {
@@ -175,8 +175,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   centerTotalText: {
-    fontSize: 10,
-    fontWeight: '800',
+    ...typography.overline,
     color: colors.ink,
     textAlign: 'center',
   },
@@ -198,13 +197,11 @@ const styles = StyleSheet.create({
   },
   legendName: {
     flex: 1,
-    fontSize: 12,
-    fontWeight: '600',
+    ...typography.caption,
     color: colors.ink,
   },
   legendPercent: {
-    fontSize: 12,
-    fontWeight: '700',
+    ...typography.captionBold,
     color: colors.muted,
     marginLeft: spacing['3'],
   },

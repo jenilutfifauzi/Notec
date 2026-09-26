@@ -517,6 +517,7 @@ const styles = StyleSheet.create({
     color: colors.red,
   },
   menuSubtitle: {
+    ...typography.caption,
     fontSize: 11,
     color: colors.muted,
     marginTop: 2,
@@ -533,12 +534,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   infoTitle: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...typography.label,
     color: colors.ink,
     marginBottom: 4,
   },
   infoBody: {
+    ...typography.caption,
     fontSize: 11,
     color: colors.subtle,
     lineHeight: 16,
@@ -548,14 +549,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   appInfoText: {
-    fontSize: 12,
-    fontWeight: '700',
+    ...typography.captionBold,
     color: colors.muted,
   },
   appInfoSub: {
+    ...typography.overline,
     fontSize: 10,
     color: colors.sectionHeader,
     marginTop: 2,
+    textTransform: 'none',
   },
   warningBox: {
     flexDirection: 'row',
@@ -570,17 +572,16 @@ const styles = StyleSheet.create({
     marginTop: spacing['6'],
   },
   warningText: {
+    ...typography.caption,
     fontSize: 11,
     color: colors.warningText,
     lineHeight: 16,
-    fontWeight: '500',
     flex: 1,
   },
   errorText: {
+    ...typography.captionBold,
     color: colors.red,
-    fontSize: 12,
     marginTop: spacing['4'],
-    fontWeight: '600',
   },
   modalActions: {
     marginTop: spacing['8'],

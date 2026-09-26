@@ -6,7 +6,16 @@ import { useEffect, useState } from 'react';
 import { db, getDbInitError } from '../db/client';
 import { seedCategories } from '../db/seed';
 import migrations from '../drizzle/migrations';
-import { colors } from '@/components/ui';
+import { colors, typography } from '@/components/ui';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+  Inter_900Black,
+} from '@expo-google-fonts/inter';
 
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
   const isSharedArrayBufferError = error.message?.includes('SharedArrayBuffer');
@@ -51,9 +60,23 @@ export default function RootLayout() {
 }
 
 function RootLayoutContent() {
+  const [fontsLoaded, fontError] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+    Inter_900Black,
+    'Inter': Inter_400Regular,
+    'Inter-Regular': Inter_400Regular,
+    'Inter-Medium': Inter_500Medium,
+    'Inter-SemiBold': Inter_600SemiBold,
+    'Inter-Bold': Inter_700Bold,
+    'Inter-ExtraBold': Inter_800ExtraBold,
+    'Inter-Black': Inter_900Black,
+  });
   const { success, error } = useMigrations(db, migrations);
   const [seeded, setSeeded] = useState(false);
-
   useEffect(() => {
     if (!success) return;
     seedCategories()
@@ -73,7 +96,7 @@ function RootLayoutContent() {
     );
   }
 
-  if (!success || !seeded) {
+  if (!success || !seeded || (!fontsLoaded && !fontError)) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -126,13 +149,14 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   errorTitle: {
+    ...typography.title,
     fontSize: 16,
-    fontWeight: '700',
     color: colors.ink,
     marginBottom: 8,
     textAlign: 'center',
   },
   errorText: {
+    ...typography.caption,
     color: colors.red,
     fontSize: 13,
     textAlign: 'center',
@@ -148,8 +172,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   retryText: {
+    ...typography.captionBold,
     color: colors.white,
-    fontWeight: '700',
     fontSize: 13,
   },
 });

@@ -71,8 +71,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   actionText: {
-    fontSize: 12,
-    fontWeight: '700',
+    ...typography.captionBold,
     color: colors.primary,
   },
 });

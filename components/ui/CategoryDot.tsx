@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, ViewStyle, StyleProp } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle, StyleProp, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radii } from '@/lib/tokens';
+import { colors, radii, fontFamilies } from '@/lib/tokens';
 
 export type CategoryDotSize = 'sm' | 'md' | 'lg';
 
@@ -76,6 +76,7 @@ const styles = StyleSheet.create({
   },
   letter: {
     color: colors.white,
-    fontWeight: '700',
+    fontFamily: fontFamilies.bold,
+    fontWeight: Platform.OS === 'android' ? undefined : '700',
   },
 });
