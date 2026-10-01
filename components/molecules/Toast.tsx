@@ -7,7 +7,8 @@ import {
   StyleProp,
 } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
-import { colors, radii, shadows, spacing, typography } from '@/lib/tokens';
+import { useTheme } from '@/lib/theme';
+import { radii, spacing, typography } from '@/lib/tokens';
 
 export interface ToastProps {
   visible: boolean;
@@ -26,6 +27,8 @@ export default function Toast({
   duration = 4000,
   style,
 }: ToastProps) {
+  const { colors, shadows } = useTheme();
+
   useEffect(() => {
     if (!visible || !onDismiss || duration <= 0) return;
 
@@ -42,9 +45,13 @@ export default function Toast({
     <Animated.View
       entering={FadeInDown.duration(200)}
       exiting={FadeOutDown.duration(200)}
-      style={[styles.container, style]}
+      style={[
+        styles.container,
+        { backgroundColor: colors.toastBg, ...shadows.toast },
+        style,
+      ]}
     >
-      <Text style={styles.message}>{message}</Text>
+      <Text style={[styles.message, { color: colors.white }]}>{message}</Text>
       {action ? (
         <Pressable
           onPress={action.onPress}
@@ -52,7 +59,7 @@ export default function Toast({
           accessibilityRole="button"
           accessibilityLabel={action.label}
         >
-          <Text style={styles.actionText}>{action.label}</Text>
+          <Text style={[styles.actionText, { color: colors.toastAction }]}>{action.label}</Text>
         </Pressable>
       ) : null}
     </Animated.View>
@@ -65,7 +72,6 @@ const styles = StyleSheet.create({
     bottom: 24,
     left: 20,
     right: 20,
-    backgroundColor: colors.toastBg,
     borderRadius: radii.lg,
     borderCurve: 'continuous',
     paddingVertical: spacing['6'],
@@ -74,16 +80,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     zIndex: 9999,
-    ...shadows.toast,
   },
   message: {
     ...typography.captionBold,
-    color: colors.white,
     flex: 1,
     marginRight: spacing['4'],
   },
   actionText: {
     ...typography.captionBold,
-    color: colors.toastAction,
   },
 });

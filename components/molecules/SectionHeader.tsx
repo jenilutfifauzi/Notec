@@ -7,7 +7,8 @@ import {
   ViewStyle,
   StyleProp,
 } from 'react-native';
-import { colors, spacing, typography } from '@/lib/tokens';
+import { useTheme } from '@/lib/theme';
+import { spacing, typography } from '@/lib/tokens';
 
 export type SectionHeaderVariant = 'overline' | 'subtitle';
 
@@ -24,6 +25,7 @@ export default function SectionHeader({
   variant = 'subtitle',
   style,
 }: SectionHeaderProps) {
+  const { colors } = useTheme();
   const isOverline = variant === 'overline';
 
   return (
@@ -31,7 +33,7 @@ export default function SectionHeader({
       <Text
         style={[
           styles.baseTitle,
-          isOverline ? styles.overlineTitle : styles.subtitleTitle,
+          isOverline ? [styles.overlineTitle, { color: colors.sectionHeader }] : [styles.subtitleTitle, { color: colors.ink }],
         ]}
       >
         {title}
@@ -44,7 +46,7 @@ export default function SectionHeader({
           accessibilityRole="button"
           accessibilityLabel={rightAction.label}
         >
-          <Text style={styles.actionText}>{rightAction.label}</Text>
+          <Text style={[styles.actionText, { color: colors.primary }]}>{rightAction.label}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -63,15 +65,12 @@ const styles = StyleSheet.create({
   },
   overlineTitle: {
     ...typography.overline,
-    color: colors.sectionHeader,
     letterSpacing: 0.8,
   },
   subtitleTitle: {
     ...typography.titleSmall,
-    color: colors.ink,
   },
   actionText: {
     ...typography.captionBold,
-    color: colors.primary,
   },
 });

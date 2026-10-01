@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle, StyleProp } from 'react-native';
-import { colors, spacing } from '@/lib/tokens';
+import { useTheme } from '@/lib/theme';
+import { spacing } from '@/lib/tokens';
 
 export interface DividerProps {
   spacing?: keyof typeof spacing;
@@ -10,14 +11,16 @@ export interface DividerProps {
 
 export default function Divider({
   spacing: marginSpacing,
-  color = colors.line,
+  color,
   style,
 }: DividerProps) {
+  const { colors } = useTheme();
+  const dividerColor = color || colors.line;
   return (
     <View
       style={[
         styles.divider,
-        { backgroundColor: color },
+        { backgroundColor: dividerColor },
         marginSpacing ? { marginVertical: spacing[marginSpacing] } : null,
         style,
       ]}

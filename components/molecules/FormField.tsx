@@ -6,7 +6,8 @@ import {
   ViewStyle,
   StyleProp,
 } from 'react-native';
-import { colors, radii, spacing, typography } from '@/lib/tokens';
+import { useTheme } from '@/lib/theme';
+import { radii, spacing, typography } from '@/lib/tokens';
 
 export interface FormFieldProps {
   label?: string;
@@ -25,28 +26,28 @@ export default function FormField({
   children,
   style,
 }: FormFieldProps) {
+  const { colors } = useTheme();
   const isBanner = errorMode === 'banner';
 
   return (
     <View style={[styles.container, style]}>
-      {label ? <Text style={styles.label}>{label}</Text> : null}
+      {label ? <Text style={[styles.label, { color: colors.ink }]}>{label}</Text> : null}
 
       {children}
 
       {error && isBanner ? (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorBannerText}>{error}</Text>
+        <View style={[styles.errorBanner, { backgroundColor: colors.errorBg, borderColor: colors.errorBorder }]}>
+          <Text style={[styles.errorBannerText, { color: colors.red }]}>{error}</Text>
         </View>
       ) : null}
-
       <View style={styles.footerRow}>
         {error && !isBanner ? (
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={[styles.errorText, { color: colors.red }]}>{error}</Text>
         ) : (
           <View />
         )}
         {charCount ? (
-          <Text style={styles.charCounter}>
+          <Text style={[styles.charCounter, { color: colors.muted }]}>
             {charCount.current}/{charCount.max}
           </Text>
         ) : null}
@@ -62,7 +63,6 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.captionBold,
-    color: colors.ink,
     marginBottom: spacing['3'],
   },
   footerRow: {
@@ -74,24 +74,19 @@ const styles = StyleSheet.create({
   },
   errorText: {
     ...typography.caption,
-    color: colors.red,
   },
   charCounter: {
     ...typography.overline,
-    color: colors.muted,
     marginLeft: 'auto',
   },
   errorBanner: {
     marginTop: spacing['3'],
-    backgroundColor: colors.errorBg,
     padding: spacing['4'],
     borderRadius: radii.sm,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: colors.errorBorder,
   },
   errorBannerText: {
     ...typography.caption,
-    color: colors.red,
   },
 });

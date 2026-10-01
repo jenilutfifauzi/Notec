@@ -10,7 +10,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon, Search01Icon, Sun01Icon, Moon02Icon } from '@/lib/icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '@/lib/theme';
 import { db } from '../../db/client';
 import { transactions } from '../../db/schema';
 import {
@@ -29,18 +31,17 @@ import BarChartCard from '@/components/organisms/BarChartCard';
 import DonutChartCard from '@/components/organisms/DonutChartCard';
 import { formatRupiah } from '../../lib/format';
 import {
-  colors,
   radii,
   spacing,
   typography,
+  fontFamilies,
   Card,
   AppText,
-  Button,
   SectionHeader,
   EmptyState,
 } from '@/components/ui';
-
 export default function BerandaScreen() {
+  const { mode, colors, toggleTheme } = useTheme();
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth() + 1);
@@ -114,43 +115,92 @@ export default function BerandaScreen() {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.bg }]}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
-      {/* Blue Hero Header */}
-      <View style={styles.hero}>
-        <SafeAreaView edges={['top']} style={styles.safeHeader}>
-          {/* Greeting & Settings */}
-          <View style={styles.heroTop}>
-            <View>
-              <Text style={styles.heroGreeting}>Halo! 👋</Text>
+      {/* Hero Header with Stacked Card Layers */}
+      <View style={styles.heroWrapper}>
+        {/* Hero Stacked Card Layers (Layered behind Hero) */}
+        <View
+          style={[
+            styles.heroStack3,
+            {
+              backgroundColor: mode === 'dark' ? '#193526' : colors.heroStack3,
+              borderColor: mode === 'dark' ? '#28442e' : 'transparent',
+            },
+          ]}
+        />
+        <View
+          style={[
+            styles.heroStack2,
+            {
+              backgroundColor: mode === 'dark' ? '#24452d' : colors.heroStack2,
+              borderColor: mode === 'dark' ? '#35532c' : 'transparent',
+            },
+          ]}
+        />
+        <View
+          style={[
+            styles.heroStack1,
+            {
+              backgroundColor: mode === 'dark' ? '#396328' : colors.heroStack1,
+              borderColor: mode === 'dark' ? '#4a6e30' : 'transparent',
+            },
+          ]}
+        />
+
+        {/* Green Nature Hero Header (Front) */}
+        <LinearGradient colors={['#d5f56a', '#8fc83a']} style={styles.hero}>
+          <SafeAreaView edges={['top']} style={styles.safeHeader}>
+            {/* Greeting & Actions */}
+            {/* Top Bar: Search Pill (Dynamic Island) & Theme Toggle */}
+            <View style={styles.heroTop}>
+              <Pressable
+                onPress={() => router.push('/history')}
+                style={styles.searchPill}
+                accessibilityRole="button"
+                accessibilityLabel="Cari catatan atau kategori"
+              >
+                <Icon icon={Search01Icon} size={14} color="#c7f23a" />
+                <Text style={styles.searchPillText}>Cari...</Text>
+              </Pressable>
+              <Pressable
+                onPress={toggleTheme}
+                onLongPress={() => router.push('/settings')}
+                style={styles.themeButton}
+                accessibilityLabel={mode === 'dark' ? 'Mode Terang' : 'Mode Gelap'}
+                accessibilityRole="button"
+              >
+                <Icon
+                  icon={mode === 'dark' ? Sun01Icon : Moon02Icon}
+                  size={16}
+                  color="#d9f77b"
+                />
+              </Pressable>
+            </View>
+
+            {/* Greeting: Dashboard */}
+            <View style={styles.heroTitleGroup}>
+              <Text style={styles.heroGreeting}>Dashboard</Text>
               <Text style={styles.heroSub}>Ringkasan keuanganmu</Text>
             </View>
-            <Pressable
-              onPress={() => router.push('/settings')}
-              style={styles.iconButton}
-              accessibilityLabel="Pengaturan"
-              accessibilityRole="button"
-            >
-              <Ionicons name="settings-outline" size={18} color={colors.white} />
-            </Pressable>
-          </View>
 
-          {/* Balance */}
-          <View style={styles.balanceSection}>
-            <Text style={styles.balanceLabel}>Selisih bulan ini</Text>
-            <Text style={styles.balanceAmount}>{formatRupiah(summary.balance)}</Text>
+            {/* Balance */}
+            <View style={styles.balanceSection}>
+              <Text style={styles.balanceLabel}>Saldo bulan ini</Text>
+              <Text style={styles.balanceAmount}>{formatRupiah(summary.balance)}</Text>
 
-            {/* Month Picker in Hero */}
-            <MonthPicker
-              year={selectedYear}
-              month={selectedMonth}
-              onChange={handleMonthChange}
-              variant="hero"
-            />
-          </View>
-        </SafeAreaView>
+              {/* Month Picker in Hero */}
+              <MonthPicker
+                year={selectedYear}
+                month={selectedMonth}
+                onChange={handleMonthChange}
+                variant="hero"
+              />
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
       </View>
 
       {/* Main Content Area */}
@@ -158,38 +208,18 @@ export default function BerandaScreen() {
         {/* Metric Cards (Overlapping Hero) */}
         <View style={styles.metricsRow}>
           <Card variant="metric" style={styles.metricCard}>
-            <Text style={styles.metricLabel}>↙ Masuk</Text>
-            <AppText variant="title" color={colors.green} tabularNums style={styles.metricValue}>
+            <Text style={[styles.metricLabel, { color: colors.muted }]}>↙ Masuk</Text>
+            <AppText variant="title" color={colors.ink} tabularNums style={styles.metricValue}>
               {formatRupiah(summary.income)}
             </AppText>
           </Card>
           <Card variant="metric" style={styles.metricCard}>
-            <Text style={styles.metricLabel}>↗ Keluar</Text>
-            <AppText variant="title" color={colors.red} tabularNums style={styles.metricValue}>
+            <Text style={[styles.metricLabel, { color: colors.muted }]}>↗ Keluar</Text>
+            <AppText variant="title" color={colors.ink} tabularNums style={styles.metricValue}>
               {formatRupiah(summary.expense)}
             </AppText>
           </Card>
         </View>
-
-        {/* Quick Actions Row */}
-        <View style={styles.quickActionsRow}>
-          <Button
-            title="Catat Transaksi"
-            onPress={() => router.push('/record')}
-            variant="primary"
-            icon={<Ionicons name="add-circle" size={18} color={colors.white} />}
-            style={styles.actionBtnFlex}
-          />
-
-          <Button
-            title="Kelola Kategori"
-            onPress={() => router.push('/categories')}
-            variant="outline"
-            icon={<Ionicons name="pricetags-outline" size={17} color={colors.primary} />}
-            style={styles.actionBtnFlex}
-          />
-        </View>
-
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color={colors.primary} />
@@ -213,14 +243,20 @@ export default function BerandaScreen() {
 
             {/* Recent Transactions Section */}
             <View style={styles.recentSection}>
-              <SectionHeader
-                title="Terbaru"
-                rightAction={{ label: 'Lihat semua', onPress: () => router.push('/history') }}
-                variant="subtitle"
-              />
+              <View style={styles.recentHeader}>
+                <Text style={[styles.recentTitle, { color: colors.ink }]}>Terbaru</Text>
+                <Pressable
+                  onPress={() => router.push('/history')}
+                  style={styles.recentActionBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel="Lihat semua"
+                >
+                  <Text style={[styles.recentActionText, { color: colors.ink }]}>Lihat semua</Text>
+                </Pressable>
+              </View>
 
-              <Card style={styles.recentCard}>
-                {recentList.length === 0 ? (
+              {recentList.length === 0 ? (
+                <Card style={styles.recentEmptyCard}>
                   <EmptyState
                     message="Belum ada catatan. Tambah transaksi pertama."
                     action={{
@@ -228,8 +264,10 @@ export default function BerandaScreen() {
                       onPress: () => router.push('/record'),
                     }}
                   />
-                ) : (
-                  recentList.map((tx) => (
+                </Card>
+              ) : (
+                <View style={styles.recentList}>
+                  {recentList.map((tx) => (
                     <TransactionItem
                       key={tx.id}
                       id={tx.id}
@@ -241,9 +279,9 @@ export default function BerandaScreen() {
                       transactionDate={tx.transaction_date}
                       onPress={(id) => router.push(`/record?id=${id}`)}
                     />
-                  ))
-                )}
-              </Card>
+                  ))}
+                </View>
+              )}
             </View>
           </>
         )}
@@ -255,97 +293,194 @@ export default function BerandaScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg,
   },
   scrollContent: {
     paddingBottom: spacing['24'],
   },
+  heroWrapper: {
+    position: 'relative',
+    marginBottom: 20,
+    overflow: 'visible',
+  },
   hero: {
-    backgroundColor: colors.primary,
-    borderBottomLeftRadius: 26,
-    borderBottomRightRadius: 26,
+    borderBottomLeftRadius: 22,
+    borderBottomRightRadius: 22,
     borderCurve: 'continuous',
-    paddingHorizontal: spacing['10'],
-    paddingBottom: 44,
+    paddingHorizontal: 18,
+    paddingBottom: 22,
+    zIndex: 4,
   },
   safeHeader: {
-    paddingTop: spacing['4'],
+    paddingTop: spacing['3'],
   },
   heroTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing['9'],
+    marginBottom: 16,
   },
-  heroGreeting: {
-    ...typography.title,
-    fontSize: 20,
-    color: colors.white,
-  },
-  heroSub: {
-    ...typography.caption,
-    color: colors.heroSubtitle,
-    marginTop: spacing['2'],
-  },
-  iconButton: {
-    width: 34,
+  searchPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#063b1b',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#d9f77b66',
+    paddingHorizontal: 12,
     height: 34,
-    borderRadius: radii.md,
+    gap: 6,
+  },
+  searchPillText: {
+    color: '#d9f77b',
+    fontFamily: fontFamilies.semiBold,
+    fontSize: 12,
+    letterSpacing: 0,
+  },
+  themeButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: colors.heroIconBorder,
-    backgroundColor: colors.heroIconBg,
+    borderColor: '#c7f23a66',
+    backgroundColor: '#21451f',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  heroTitleGroup: {
+    gap: 4,
+    marginBottom: 14,
+  },
+  heroGreeting: {
+    fontFamily: fontFamilies.bold,
+    fontSize: 22,
+    letterSpacing: -0.3,
+    color: '#063b1b',
+    lineHeight: 26,
+  },
+  heroSub: {
+    fontFamily: fontFamilies.medium,
+    fontSize: 13,
+    color: '#063b1b',
+    lineHeight: 16,
+  },
   balanceSection: {
-    marginTop: spacing['2'],
+    gap: 5,
   },
   balanceLabel: {
-    ...typography.caption,
-    color: colors.heroBalanceLabel,
-    fontWeight: '500',
+    fontFamily: fontFamilies.medium,
+    fontSize: 13,
+    color: '#063b1b',
+    lineHeight: 16,
   },
   balanceAmount: {
-    ...typography.displayLarge,
-    color: colors.white,
-    marginVertical: spacing['3'],
+    fontFamily: fontFamilies.extraBold,
+    fontSize: 34,
+    letterSpacing: -0.4,
+    color: '#063b1b',
+    lineHeight: 40,
+    marginVertical: 4,
+    fontVariant: ['tabular-nums'],
+  },
+  heroStack1: {
+    position: 'absolute',
+    left: 4,
+    right: 4,
+    bottom: -6,
+    height: 48,
+    borderBottomLeftRadius: 22,
+    borderBottomRightRadius: 22,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderTopWidth: 0,
+    zIndex: 3,
+  },
+  heroStack2: {
+    position: 'absolute',
+    left: 8,
+    right: 8,
+    bottom: -12,
+    height: 48,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderTopWidth: 0,
+    zIndex: 2,
+  },
+  heroStack3: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    bottom: -20,
+    height: 48,
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderTopWidth: 0,
+    zIndex: 1,
   },
   content: {
-    paddingHorizontal: spacing['8'],
+    paddingHorizontal: 16,
   },
   metricsRow: {
     flexDirection: 'row',
-    gap: spacing['6'],
-    marginTop: -26,
+    gap: 9,
+    marginTop: 18,
   },
   metricCard: {
     flex: 1,
+    borderRadius: 14,
+    padding: 15,
+    gap: 7,
   },
   metricLabel: {
-    ...typography.caption,
-    color: colors.muted,
+    fontFamily: fontFamilies.medium,
+    fontSize: 12,
+    lineHeight: 15,
   },
   metricValue: {
-    marginTop: spacing['3'],
+    fontFamily: fontFamilies.bold,
+    fontSize: 17,
+    letterSpacing: -0.2,
+    lineHeight: 21,
+    fontVariant: ['tabular-nums'],
   },
   loadingContainer: {
     padding: spacing['20'],
     alignItems: 'center',
   },
   recentSection: {
-    marginTop: spacing['11'],
+    marginTop: 22,
   },
-  recentCard: {
-    paddingHorizontal: spacing['7'],
-    paddingVertical: 0,
-  },
-  quickActionsRow: {
+  recentHeader: {
     flexDirection: 'row',
-    gap: spacing['5'],
-    marginTop: spacing['7'],
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 11,
   },
-  actionBtnFlex: {
-    flex: 1,
+  recentTitle: {
+    fontFamily: fontFamilies.semiBold,
+    fontSize: 15,
+    letterSpacing: -0.2,
+    lineHeight: 19,
+  },
+  recentActionBtn: {
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  recentActionText: {
+    fontFamily: fontFamilies.semiBold,
+    fontSize: 12,
+    lineHeight: 15,
+  },
+  recentList: {
+    gap: 4,
+  },
+  recentEmptyCard: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
 });

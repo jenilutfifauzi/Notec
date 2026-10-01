@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, spacing, typography } from '@/lib/tokens';
+import { useTheme } from '@/lib/theme';
+import { spacing, typography } from '@/lib/tokens';
 import Button from '@/components/atoms/Button';
 import BottomSheetWrapper from '@/components/atoms/BottomSheetWrapper';
 
@@ -25,6 +26,7 @@ export default function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const { colors } = useTheme();
   return (
     <BottomSheetWrapper
       visible={visible}
@@ -32,7 +34,7 @@ export default function ConfirmDialog({
       title={title}
       scrollable={false}
     >
-      <Text style={styles.message}>{message}</Text>
+      <Text style={[styles.message, { color: colors.subtle }]}>{message}</Text>
 
       <View style={styles.actionRow}>
         <Button
@@ -59,7 +61,6 @@ const styles = StyleSheet.create({
   message: {
     ...typography.body,
     fontSize: 14,
-    color: colors.subtle,
     lineHeight: 20,
     marginBottom: spacing['6'],
   },

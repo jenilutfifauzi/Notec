@@ -7,11 +7,12 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon, CheckmarkCircle01Icon, ChevronRightIcon, Add01Icon } from '@/lib/icons';
 import { Category } from '@/db/schema';
 import { getActiveCategories, insertCategory } from '@/db/queries/categories';
 import { CATEGORY_PALETTE, MAX_CATEGORY_NAME_LENGTH } from '@/lib/constants';
-import { colors, radii, spacing, typography } from '@/lib/tokens';
+import { useTheme } from '@/lib/theme';
+import { radii, spacing, typography } from '@/lib/tokens';
 import CategoryDot from '@/components/atoms/CategoryDot';
 import Button from '@/components/atoms/Button';
 import TextInput from '@/components/molecules/TextInput';
@@ -34,6 +35,7 @@ export default function CategoryPickerModal({
   onClose,
   onManageCategories,
 }: CategoryPickerModalProps) {
+  const { colors } = useTheme();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -98,17 +100,26 @@ export default function CategoryPickerModal({
           onSelect(item);
           onClose();
         }}
-        style={[styles.categoryRow, isSelected ? styles.selectedRow : null]}
+        style={[
+          styles.categoryRow,
+          { borderBottomColor: colors.line },
+          isSelected ? [styles.selectedRow, { backgroundColor: colors.surfaceInput }] : null,
+        ]}
         accessibilityRole="button"
       >
         <CategoryDot color={item.color || colors.primary} label={item.name} size="md" />
-        <Text style={[styles.categoryName, isSelected ? styles.selectedCategoryName : null]}>
+        <Text
+          style={[
+            styles.categoryName,
+            { color: isSelected ? colors.primary : colors.ink },
+          ]}
+        >
           {item.name}
         </Text>
         {isSelected ? (
-          <Ionicons name="checkmark-circle" size={20} color={colors.primary} style={styles.chevron} />
+          <Icon icon={CheckmarkCircle01Icon} size={20} color={colors.primary} style={styles.chevron} />
         ) : (
-          <Ionicons name="chevron-forward" size={18} color={colors.chevron} style={styles.chevron} />
+          <Icon icon={ChevronRightIcon} size={18} color={colors.chevron} style={styles.chevron} />
         )}
       </Pressable>
     );
@@ -137,7 +148,7 @@ export default function CategoryPickerModal({
             autoFocus
           />
 
-          <Text style={styles.label}>Pilih warna</Text>
+          <Text style={[styles.label, { color: colors.ink }]}>Pilih warna</Text>
           <View style={styles.paletteRow}>
             {CATEGORY_PALETTE.map((color) => {
               const isChosen = selectedColor === color;
@@ -151,7 +162,7 @@ export default function CategoryPickerModal({
                     color={color}
                     size="lg"
                     selected={isChosen}
-                    style={isChosen ? styles.paletteDotChosen : undefined}
+                    style={isChosen ? [styles.paletteDotChosen, { borderColor: colors.ink }] : undefined}
                   />
                 </Pressable>
               );
@@ -188,7 +199,7 @@ export default function CategoryPickerModal({
             </View>
           ) : categories.length === 0 ? (
             <View style={styles.centerLoading}>
-              <Text style={styles.emptyText}>Belum ada kategori aktif.</Text>
+              <Text style={[styles.emptyText, { color: colors.muted }]}>Belum ada kategori aktif.</Text>
             </View>
           ) : (
             <LegendList
@@ -207,7 +218,7 @@ export default function CategoryPickerModal({
               setErrorMessage(null);
             }}
             variant="dashed"
-            icon={<Ionicons name="add" size={18} color={colors.primary} />}
+            icon={<Icon icon={Add01Icon} size={18} color={colors.primary} />}
             style={styles.newCatBtn}
           />
 
@@ -236,7 +247,6 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.captionBold,
-    color: colors.ink,
     marginTop: spacing['6'],
     marginBottom: spacing['3'],
   },
@@ -251,7 +261,6 @@ const styles = StyleSheet.create({
   },
   paletteDotChosen: {
     borderWidth: 2.5,
-    borderColor: colors.ink,
   },
   actionButtons: {
     flexDirection: 'row',
@@ -272,20 +281,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing['5'],
     borderBottomWidth: 1,
-    borderBottomColor: colors.line,
   },
-  selectedRow: {
-    backgroundColor: colors.surfaceInput,
-  },
+  selectedRow: {},
   categoryName: {
     ...typography.bodyBold,
-    color: colors.ink,
     marginLeft: spacing['6'],
     flex: 1,
   },
-  selectedCategoryName: {
-    color: colors.primary,
-  },
+  selectedCategoryName: {},
   chevron: {
     marginLeft: 'auto',
   },
@@ -301,6 +304,5 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     ...typography.caption,
-    color: colors.muted,
   },
 });

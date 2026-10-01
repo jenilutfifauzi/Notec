@@ -9,8 +9,9 @@ import {
   ViewStyle,
   StyleProp,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, radii, spacing, typography } from '@/lib/tokens';
+import { Icon, Search01Icon, CancelCircleIcon } from '@/lib/icons';
+import { useTheme } from '@/lib/theme';
+import { radii, spacing, typography } from '@/lib/tokens';
 
 export interface TextInputProps extends RNTextInputProps {
   label?: string;
@@ -36,25 +37,27 @@ export default function TextInput({
   value,
   ...props
 }: TextInputProps) {
+  const { colors } = useTheme();
   const isSearch = variant === 'search';
   const showClear = Boolean(onClear && value && value.length > 0);
-
   return (
     <View style={[styles.wrapper, containerStyle]}>
       {label ? (
-        <Text style={[styles.label, error ? styles.labelError : null]}>{label}</Text>
+        <Text style={[styles.label, { color: colors.ink }, error ? { color: colors.red } : null]}>{label}</Text>
       ) : null}
 
       <View
         style={[
           styles.inputContainer,
-          isSearch ? styles.searchContainer : styles.defaultContainer,
-          error ? styles.containerError : null,
+          isSearch
+            ? [styles.searchContainer, { backgroundColor: colors.searchBg, borderColor: colors.searchBorder }]
+            : [styles.defaultContainer, { backgroundColor: colors.surfaceInput, borderColor: colors.borderInput }],
+          error ? { borderColor: colors.red } : null,
         ]}
       >
         {isSearch && !leftIcon ? (
-          <Ionicons
-            name="search"
+          <Icon
+            icon={Search01Icon}
             size={18}
             color={colors.muted}
             style={styles.searchIcon}
@@ -66,7 +69,7 @@ export default function TextInput({
         <RNTextInput
           value={value}
           placeholderTextColor={colors.placeholder}
-          style={[styles.input, isSearch && styles.searchInput, style]}
+          style={[styles.input, { color: colors.ink }, isSearch && styles.searchInput, style]}
           {...props}
         />
 
@@ -78,7 +81,7 @@ export default function TextInput({
             accessibilityLabel="Hapus teks"
             style={styles.iconButton}
           >
-            <Ionicons name="close-circle" size={18} color={colors.muted} />
+            <Icon icon={CancelCircleIcon} size={18} color={colors.muted} />
           </Pressable>
         ) : null}
 
@@ -86,9 +89,9 @@ export default function TextInput({
       </View>
 
       <View style={styles.footerRow}>
-        {error ? <Text style={styles.errorText}>{error}</Text> : <View />}
+        {error ? <Text style={[styles.errorText, { color: colors.red }]}>{error}</Text> : <View />}
         {charCount ? (
-          <Text style={styles.charCounter}>
+          <Text style={[styles.charCounter, { color: colors.muted }]}>
             {charCount.current}/{charCount.max}
           </Text>
         ) : null}
@@ -103,11 +106,7 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.captionBold,
-    color: colors.ink,
     marginBottom: spacing['3'],
-  },
-  labelError: {
-    color: colors.red,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -117,23 +116,17 @@ const styles = StyleSheet.create({
   },
   defaultContainer: {
     borderWidth: 1,
-    borderColor: colors.borderInput,
-    backgroundColor: colors.surfaceInput,
     paddingHorizontal: spacing['7'],
     minHeight: 48,
   },
   searchContainer: {
-    backgroundColor: colors.surfaceControl,
+    borderWidth: 1,
     paddingHorizontal: spacing['6'],
     minHeight: 44,
-  },
-  containerError: {
-    borderColor: colors.red,
   },
   input: {
     flex: 1,
     ...typography.body,
-    color: colors.ink,
     paddingVertical: spacing['6'],
   },
   searchInput: {
@@ -160,11 +153,9 @@ const styles = StyleSheet.create({
   },
   errorText: {
     ...typography.caption,
-    color: colors.red,
   },
   charCounter: {
     ...typography.overline,
-    color: colors.muted,
     marginLeft: 'auto',
   },
 });

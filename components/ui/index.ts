@@ -1,5 +1,9 @@
 // Design tokens
-export * from '@/lib/tokens';
+export { radii, spacing, fontFamilies, typography } from '@/lib/tokens';
+
+// Theme
+export { useTheme, ThemeProvider, lightColors, darkColors } from '@/lib/theme';
+export type { ThemeMode, ThemeColors, ThemeShadows, ThemeContextValue } from '@/lib/theme';
 
 // Atoms
 export { default as AppText } from '@/components/atoms/AppText';
@@ -52,3 +56,7 @@ export { default as DonutChartCard } from '@/components/organisms/DonutChartCard
 export type { DonutChartCardProps } from '@/components/organisms/DonutChartCard';
 export { default as ScreenHeader } from '@/components/organisms/ScreenHeader';
 export type { ScreenHeaderProps, ScreenHeaderVariant } from '@/components/organisms/ScreenHeader';
+
+// Icons
+export { Icon } from '@/components/ui/Icon';
+export type { IconProps } from '@/components/ui/Icon';

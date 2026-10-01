@@ -1,25 +1,43 @@
 import { Tabs, router } from 'expo-router';
 import { View, StyleSheet, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, typography } from '@/components/ui';
-
+import { Icon, Home01Icon, Add01Icon, Clock01Icon } from '@/lib/icons';
+import { useTheme } from '@/lib/theme';
+import { fontFamilies } from '@/lib/tokens';
 export default function TabLayout() {
+  const { mode, colors } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
-        tabBarStyle: styles.tabBar,
-        tabBarLabelStyle: styles.tabLabel,
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            backgroundColor: colors.tabBarBg,
+            borderTopColor: colors.line,
+          },
+        ],
+        tabBarLabelStyle: [styles.tabLabel, { color: mode === 'dark' ? colors.ink : undefined }],
+        tabBarButton: ({ ref, ...rest }) => (
+          <Pressable
+            {...rest}
+            android_ripple={null}
+            style={({ pressed }) => [
+              rest.style,
+              pressed && { opacity: 0.75 },
+            ]}
+          />
+        ),
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Beranda',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size ?? 22} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Icon icon={Home01Icon} size={19} color={color} />
           ),
         }}
       />
@@ -35,8 +53,19 @@ export default function TabLayout() {
               accessibilityLabel="Catat Transaksi"
               accessibilityRole="button"
             >
-              <View style={styles.addButton}>
-                <Ionicons name="add" size={26} color={colors.white} />
+              <View
+                style={[
+                  styles.addButton,
+                  {
+                    backgroundColor: colors.primary,
+                  },
+                ]}
+              >
+                <Icon
+                  icon={Add01Icon}
+                  size={26}
+                  color={mode === 'dark' ? '#212121' : colors.white}
+                />
               </View>
             </Pressable>
           ),
@@ -52,8 +81,8 @@ export default function TabLayout() {
         name="history"
         options={{
           title: 'Riwayat',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="list-outline" size={size ?? 22} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Icon icon={Clock01Icon} size={19} color={color} />
           ),
         }}
       />
@@ -63,15 +92,15 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: colors.white,
     borderTopWidth: 1,
-    borderTopColor: colors.line,
-    height: 64,
-    paddingBottom: 8,
-    paddingTop: 6,
+    height: 58,
+    paddingBottom: 6,
+    paddingTop: 5,
   },
   tabLabel: {
-    ...typography.small,
+    fontFamily: fontFamilies.bold,
+    fontSize: 9,
+    fontWeight: '700',
   },
   centerButtonContainer: {
     flex: 1,
@@ -79,13 +108,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.primary,
+    width: 43,
+    height: 39,
+    borderRadius: 12,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 4px 10px rgba(36, 81, 191, 0.35)',
+    boxShadow: '0 5px 11px rgba(36, 81, 191, 0.25)',
     elevation: 4,
   },
 });

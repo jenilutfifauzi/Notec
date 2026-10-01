@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Pressable,
@@ -6,8 +6,8 @@ import {
   ViewStyle,
   StyleProp,
 } from 'react-native';
-import { colors, radii, shadows, spacing } from '@/lib/tokens';
-
+import { useTheme } from '@/lib/theme';
+import { radii, spacing } from '@/lib/tokens';
 export type CardVariant = 'default' | 'metric';
 
 export interface CardProps {
@@ -25,14 +25,28 @@ export default function Card({
   onPress,
   accessibilityLabel,
 }: CardProps) {
+  const { colors, shadows } = useTheme();
   const isMetric = variant === 'metric';
 
+  const themedStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        base: {
+          backgroundColor: colors.white,
+          borderWidth: 1,
+          borderColor: colors.line,
+          borderCurve: 'continuous',
+          ...shadows.card,
+        },
+      }),
+    [colors, shadows],
+  );
+
   const containerStyles = [
-    styles.base,
+    themedStyles.base,
     isMetric ? styles.metric : styles.default,
     style,
   ];
-
   if (onPress) {
     return (
       <Pressable
@@ -53,13 +67,6 @@ export default function Card({
 }
 
 const styles = StyleSheet.create({
-  base: {
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderCurve: 'continuous',
-    ...shadows.card,
-  },
   default: {
     borderRadius: radii['2xl'],
     padding: spacing['8'],

@@ -3,12 +3,12 @@ export const MAX_NOTE_LENGTH = 200;
 export const MAX_CATEGORY_NAME_LENGTH = 40;
 
 export const CATEGORY_PALETTE = [
-  '#2451bf',
-  '#7da1f0',
-  '#c5d5f8',
-  '#e5ecfa',
-  '#8190a8',
+  '#5B9A3C',
+  '#8fc83a',
+  '#183A27',
+  '#587066',
   '#14996b',
   '#e05b67',
   '#f59e0b',
+  '#B7D493',
 ] as const;

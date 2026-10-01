@@ -9,7 +9,7 @@ import {
 import { useLocalSearchParams, router } from 'expo-router';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { LegendList } from '@legendapp/list/react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon, ArrowDown01Icon, ArrowUp01Icon, ChevronDownIcon } from '@/lib/icons';
 import { db } from '../../db/client';
 import { transactions, Category } from '../../db/schema';
 import {
@@ -24,8 +24,8 @@ import DateFilterModal, { type DatePresetKey, type DateFilterSelection } from '@
 import CategoryPickerModal from '@/components/organisms/CategoryPickerModal';
 import ConfirmDialog from '@/components/organisms/ConfirmDialog';
 import { formatSectionDate, formatDateShort, formatRupiah } from '../../lib/format';
+import { useTheme } from '@/lib/theme';
 import {
-  colors,
   radii,
   spacing,
   typography,
@@ -37,12 +37,12 @@ import {
   Toast,
   Card,
 } from '@/components/ui';
-
 type ListItem =
   | { kind: 'header'; key: string; title: string }
   | { kind: 'item'; key: string; tx: TransactionWithCategory };
 
 export default function HistoryScreen() {
+  const { colors } = useTheme();
   const params = useLocalSearchParams<{
     year?: string;
     month?: string;
@@ -283,7 +283,7 @@ export default function HistoryScreen() {
           <SectionHeader
             title={item.title}
             variant="overline"
-            style={styles.sectionHeader}
+            style={[styles.sectionHeader, { alignItems: 'center' }]}
           />
         );
       }
@@ -311,12 +311,12 @@ export default function HistoryScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      {/* Top Blue Header */}
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
+      {/* Top Gradient Header */}
       <ScreenHeader title="Riwayat" />
 
       {/* Top Controls Area */}
-      <View style={styles.controlsArea}>
+      <View style={[styles.controlsArea, { backgroundColor: colors.white, borderBottomColor: colors.line }]}>
         {/* Month Navigator */}
         <View style={styles.monthPickerWrap}>
           <MonthPicker
@@ -384,7 +384,12 @@ export default function HistoryScreen() {
                 ? selectedCategory.name
                 : categoryIdsFilter
                 ? 'Kategori terpilih'
-                : 'Kategori ⌄'
+                : 'Kategori'
+            }
+            rightIcon={
+              !selectedCategory && !categoryIdsFilter ? (
+                <Icon icon={ChevronDownIcon} size={12} color={colors.muted} />
+              ) : undefined
             }
             active={Boolean(selectedCategory || categoryIdsFilter)}
             onPress={() => {
@@ -407,7 +412,12 @@ export default function HistoryScreen() {
 
           {/* Periode / Tanggal Filter */}
           <Chip
-            label={hasDateFilter ? customPeriodLabelShort : 'Periode ⌄'}
+            label={hasDateFilter ? customPeriodLabelShort : 'Periode'}
+            rightIcon={
+              !hasDateFilter ? (
+                <Icon icon={ChevronDownIcon} size={12} color={colors.muted} />
+              ) : undefined
+            }
             active={hasDateFilter}
             onPress={() => {
               if (hasDateFilter) {
@@ -432,23 +442,23 @@ export default function HistoryScreen() {
       </View>
 
       {/* Contextual Transaction Summary */}
-      <View style={styles.summaryBar}>
-        <Text style={styles.summaryCount}>
+      <View style={[styles.summaryBar, { backgroundColor: colors.surfaceInput, borderBottomColor: colors.line }]}>
+        <Text style={[styles.summaryCount, { color: colors.muted }]}>
           {summaryTotals.count} transaksi
         </Text>
         <View style={styles.summaryTotals}>
           {summaryTotals.expense > 0 && selectedType !== 'income' ? (
             <View style={styles.summaryBadgeExpense}>
-              <Ionicons name="arrow-down-circle" size={13} color={colors.red} />
-              <Text style={styles.summaryExpenseText}>
+              <Icon icon={ArrowDown01Icon} size={13} color={colors.red} />
+              <Text style={[styles.summaryExpenseText, { color: colors.red }]}>
                 {formatRupiah(summaryTotals.expense)}
               </Text>
             </View>
           ) : null}
           {summaryTotals.income > 0 && selectedType !== 'expense' ? (
             <View style={styles.summaryBadgeIncome}>
-              <Ionicons name="arrow-up-circle" size={13} color={colors.green} />
-              <Text style={styles.summaryIncomeText}>
+              <Icon icon={ArrowUp01Icon} size={13} color={colors.green} />
+              <Text style={[styles.summaryIncomeText, { color: colors.green }]}>
                 {formatRupiah(summaryTotals.income)}
               </Text>
             </View>
@@ -543,15 +553,12 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg,
   },
   controlsArea: {
-    backgroundColor: colors.white,
     paddingHorizontal: spacing['8'],
     paddingTop: spacing['6'],
     paddingBottom: spacing['5'],
     borderBottomWidth: 1,
-    borderBottomColor: colors.line,
   },
   monthPickerWrap: {
     alignItems: 'center',
@@ -596,13 +603,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing['8'],
     paddingVertical: spacing['5'],
-    backgroundColor: colors.surfaceInput,
     borderBottomWidth: 1,
-    borderBottomColor: colors.line,
   },
   summaryCount: {
     ...typography.caption,
-    color: colors.muted,
   },
   summaryTotals: {
     flexDirection: 'row',
@@ -616,7 +620,6 @@ const styles = StyleSheet.create({
   },
   summaryExpenseText: {
     ...typography.captionBold,
-    color: colors.red,
     fontVariant: ['tabular-nums'],
   },
   summaryBadgeIncome: {
@@ -626,7 +629,6 @@ const styles = StyleSheet.create({
   },
   summaryIncomeText: {
     ...typography.captionBold,
-    color: colors.green,
     fontVariant: ['tabular-nums'],
   },
 });

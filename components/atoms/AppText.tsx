@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text as RNText, TextProps as RNTextProps, StyleSheet } from 'react-native';
-import { colors, typography, fontFamilies } from '@/lib/tokens';
-
+import { useTheme } from '@/lib/theme';
+import { typography, fontFamilies } from '@/lib/tokens';
 export type TypographyVariant = keyof typeof typography;
 
 export interface AppTextProps extends RNTextProps {
@@ -12,11 +12,13 @@ export interface AppTextProps extends RNTextProps {
 
 export default function AppText({
   variant = 'body',
-  color = colors.ink,
+  color,
   tabularNums = false,
   style,
   ...props
 }: AppTextProps) {
+  const { colors } = useTheme();
+  const textColor = color || colors.ink;
   const typeStyle = typography[variant];
 
   return (
@@ -24,7 +26,7 @@ export default function AppText({
       style={[
         styles.base,
         typeStyle,
-        { color },
+        { color: textColor },
         tabularNums && styles.tabular,
         style,
       ]}

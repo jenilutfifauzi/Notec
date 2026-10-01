@@ -10,7 +10,15 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  Icon,
+  ChevronRightIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  Add01Icon,
+  InformationCircleIcon,
+  Archive01Icon,
+} from '@/lib/icons';
 import { db } from '../db/client';
 import { categories, Category } from '../db/schema';
 import {
@@ -26,8 +34,8 @@ import {
   CATEGORY_PALETTE,
   MAX_CATEGORY_NAME_LENGTH,
 } from '../lib/constants';
+import { useTheme } from '@/lib/theme';
 import {
-  colors,
   radii,
   spacing,
   typography,
@@ -54,23 +62,25 @@ const CategoryRow = memo(function CategoryRow({
   color,
   onPress,
 }: CategoryRowProps) {
+  const { colors } = useTheme();
   return (
     <Pressable
-      style={styles.categoryRow}
+      style={[styles.categoryRow, { borderBottomColor: colors.line }]}
       onPress={() => onPress(id)}
       accessibilityRole="button"
       accessibilityLabel={`Kategori ${name}`}
     >
       <CategoryDot color={color || colors.primary} label={name} size="md" />
-      <Text style={styles.categoryName} numberOfLines={1}>
+      <Text style={[styles.categoryName, { color: colors.ink }]} numberOfLines={1}>
         {name}
       </Text>
-      <Ionicons name="chevron-forward" size={18} color={colors.chevron} />
+      <Icon icon={ChevronRightIcon} size={18} color={colors.chevron} />
     </Pressable>
   );
 });
 
 export default function CategoriesScreen() {
+  const { colors } = useTheme();
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [activeList, setActiveList] = useState<Category[]>([]);
   const [archivedList, setArchivedList] = useState<Category[]>([]);
@@ -191,7 +201,7 @@ export default function CategoriesScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
       {/* Top Header */}
       <ScreenHeader
         title="Kategori"
@@ -203,7 +213,7 @@ export default function CategoriesScreen() {
             accessibilityLabel="Tambah Kategori"
             accessibilityRole="button"
           >
-            <Ionicons name="add" size={26} color={colors.white} />
+            <Icon icon={Add01Icon} size={26} color="#063b1b" />
           </Pressable>
         }
       />
@@ -221,7 +231,7 @@ export default function CategoriesScreen() {
           ]}
           selected={type}
           onChange={setType}
-          colorMap={{ expense: colors.primary, income: colors.green }}
+          colorMap={{ expense: colors.ink, income: colors.ink }}
           style={styles.segmented}
         />
 
@@ -240,7 +250,7 @@ export default function CategoriesScreen() {
             </View>
           ) : activeList.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>Belum ada kategori aktif.</Text>
+              <Text style={[styles.emptyText, { color: colors.muted }]}>Belum ada kategori aktif.</Text>
             </View>
           ) : (
             activeList.map((item, index) => (
@@ -261,24 +271,23 @@ export default function CategoriesScreen() {
           title="Tambah kategori"
           onPress={handleOpenAdd}
           variant="dashed"
-          icon={<Ionicons name="add" size={18} color={colors.primary} />}
+          icon={<Icon icon={Add01Icon} size={18} color={colors.primary} />}
           style={styles.addBtn}
         />
 
         {/* Tip Text Card */}
-        <Card style={styles.tipCard}>
-          <Ionicons
-            name="information-circle-outline"
+        <Card style={[styles.tipCard, { backgroundColor: colors.surfaceTip }]}>
+          <Icon
+            icon={InformationCircleIcon}
             size={18}
             color={colors.primary}
             style={styles.tipIcon}
           />
-          <Text style={styles.tipText}>
+          <Text style={[styles.tipText, { color: colors.sectionHeader }]}>
             Kategori yang sudah dipakai bisa diarsipkan. Catatan transaksi lama tetap tersimpan
             dan terhubung.
           </Text>
         </Card>
-
         {/* Archived Section */}
         {archivedList.length > 0 ? (
           <View style={styles.archivedSection}>
@@ -286,11 +295,11 @@ export default function CategoriesScreen() {
               style={styles.archivedHeaderRow}
               onPress={() => setShowArchived(!showArchived)}
             >
-              <Text style={styles.archivedTitle}>
+              <Text style={[styles.archivedTitle, { color: colors.muted }]}>
                 Diarsipkan ({archivedList.length})
               </Text>
-              <Ionicons
-                name={showArchived ? 'chevron-up' : 'chevron-down'}
+              <Icon
+                icon={showArchived ? ChevronUpIcon : ChevronDownIcon}
                 size={18}
                 color={colors.muted}
               />
@@ -299,17 +308,17 @@ export default function CategoriesScreen() {
             {showArchived ? (
               <Card style={styles.listCard}>
                 {archivedList.map((item) => (
-                  <View key={item.id} style={styles.archivedRow}>
+                  <View key={item.id} style={[styles.archivedRow, { borderBottomColor: colors.line }]}>
                     <CategoryDot
                       color={item.color || colors.muted}
                       size="sm"
                     />
-                    <Text style={styles.archivedName}>{item.name}</Text>
+                    <Text style={[styles.archivedName, { color: colors.muted }]}>{item.name}</Text>
                     <Pressable
-                      style={styles.restoreBtn}
+                      style={[styles.restoreBtn, { backgroundColor: colors.primaryPale }]}
                       onPress={() => handleUnarchive(item)}
                     >
-                      <Text style={styles.restoreBtnText}>Aktifkan kembali</Text>
+                      <Text style={[styles.restoreBtnText, { color: colors.primary }]}>Aktifkan kembali</Text>
                     </Pressable>
                   </View>
                 ))}
@@ -339,7 +348,7 @@ export default function CategoriesScreen() {
           autoFocus
         />
 
-        <Text style={styles.paletteLabel}>Warna</Text>
+        <Text style={[styles.paletteLabel, { color: colors.ink }]}>Warna</Text>
         <View style={styles.paletteRow}>
           {CATEGORY_PALETTE.map((color) => {
             const isSelected = formColor === color;
@@ -353,7 +362,7 @@ export default function CategoriesScreen() {
                   color={color}
                   size="lg"
                   selected={isSelected}
-                  style={isSelected ? styles.paletteDotSelected : undefined}
+                  style={isSelected ? [styles.paletteDotSelected, { borderColor: colors.ink }] : undefined}
                 />
               </Pressable>
             );
@@ -375,8 +384,8 @@ export default function CategoriesScreen() {
               onPress={() => setShowArchiveConfirm(true)}
               variant="ghost"
               fullWidth
-              textStyle={styles.archiveActionText}
-              icon={<Ionicons name="archive-outline" size={16} color={colors.red} />}
+              textStyle={[styles.archiveActionText, { color: colors.red }]}
+              icon={<Icon icon={Archive01Icon} size={16} color={colors.red} />}
             />
           ) : null}
         </View>
@@ -400,7 +409,6 @@ export default function CategoriesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg,
   },
   contentScroll: {
     flex: 1,
@@ -421,12 +429,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing['6'],
     borderBottomWidth: 1,
-    borderBottomColor: colors.line,
   },
   categoryName: {
     flex: 1,
     ...typography.bodyBold,
-    color: colors.ink,
     marginLeft: spacing['6'],
   },
   addBtn: {
@@ -434,7 +440,6 @@ const styles = StyleSheet.create({
   },
   tipCard: {
     flexDirection: 'row',
-    backgroundColor: colors.surfaceTip,
     padding: spacing['7'],
     marginTop: spacing['8'],
     gap: spacing['5'],
@@ -446,7 +451,6 @@ const styles = StyleSheet.create({
     ...typography.caption,
     flex: 1,
     fontSize: 11,
-    color: colors.sectionHeader,
     lineHeight: 16,
   },
   archivedSection: {
@@ -461,23 +465,19 @@ const styles = StyleSheet.create({
   },
   archivedTitle: {
     ...typography.captionBold,
-    color: colors.muted,
   },
   archivedRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing['6'],
     borderBottomWidth: 1,
-    borderBottomColor: colors.line,
     gap: spacing['5'],
   },
   archivedName: {
     flex: 1,
     ...typography.bodySemibold,
-    color: colors.muted,
   },
   restoreBtn: {
-    backgroundColor: colors.primaryPale,
     paddingVertical: 6,
     paddingHorizontal: spacing['5'],
     borderRadius: radii['4xl'],
@@ -485,7 +485,6 @@ const styles = StyleSheet.create({
   },
   restoreBtnText: {
     ...typography.overline,
-    color: colors.primary,
     textTransform: 'none',
   },
   centerLoading: {
@@ -498,11 +497,9 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     ...typography.caption,
-    color: colors.muted,
   },
   paletteLabel: {
     ...typography.captionBold,
-    color: colors.ink,
     marginTop: spacing['6'],
     marginBottom: spacing['4'],
   },
@@ -517,13 +514,11 @@ const styles = StyleSheet.create({
   },
   paletteDotSelected: {
     borderWidth: 2.5,
-    borderColor: colors.ink,
   },
   modalActions: {
     marginTop: spacing['8'],
     gap: spacing['6'],
   },
   archiveActionText: {
-    color: colors.red,
   },
 });

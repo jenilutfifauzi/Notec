@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,9 +15,9 @@ import {
   BottomSheetBackdrop,
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, radii, spacing, typography } from '@/lib/tokens';
-
+import { Icon, Cancel01Icon } from '@/lib/icons';
+import { useTheme } from '@/lib/theme';
+import { radii, spacing, typography } from '@/lib/tokens';
 export interface BottomSheetWrapperProps {
   visible: boolean;
   onClose: () => void;
@@ -43,12 +43,37 @@ export default function BottomSheetWrapper({
   style,
   enablePanDownToClose = true,
 }: BottomSheetWrapperProps) {
+  const { colors } = useTheme();
   const bottomSheetRef = useRef<GorhomBottomSheetModal>(null);
   const windowHeight = Dimensions.get('window').height;
   const sheetMaxHeight = maxHeight || windowHeight * 0.88;
   const isMountedRef = useRef(false);
   const isPresentedRef = useRef(false);
 
+  const themedStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        sheetBackground: {
+          backgroundColor: colors.white,
+        },
+        handleIndicator: {
+          backgroundColor: colors.dragHandle,
+        },
+        title: {
+          color: colors.ink,
+        },
+        subtitle: {
+          color: colors.muted,
+        },
+        closeBtn: {
+          backgroundColor: colors.surfaceControl,
+        },
+        footer: {
+          borderTopColor: colors.line,
+        },
+      }),
+    [colors],
+  );
   useEffect(() => {
     if (!isMountedRef.current) {
       isMountedRef.current = true;
@@ -89,8 +114,8 @@ export default function BottomSheetWrapper({
   const renderHeader = () => (
     <View style={styles.header}>
       <View style={styles.titleWrap}>
-        <Text style={styles.title}>{title}</Text>
-        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        <Text style={[styles.title, themedStyles.title]}>{title}</Text>
+        {subtitle ? <Text style={[styles.subtitle, themedStyles.subtitle]}>{subtitle}</Text> : null}
       </View>
 
       <Pressable
@@ -98,9 +123,9 @@ export default function BottomSheetWrapper({
         hitSlop={10}
         accessibilityRole="button"
         accessibilityLabel="Tutup"
-        style={styles.closeBtn}
+        style={[styles.closeBtn, themedStyles.closeBtn]}
       >
-        <Ionicons name="close" size={20} color={colors.ink} />
+        <Icon icon={Cancel01Icon} size={20} color={colors.ink} />
       </Pressable>
     </View>
   );
@@ -112,8 +137,8 @@ export default function BottomSheetWrapper({
       maxDynamicContentSize={sheetMaxHeight}
       enablePanDownToClose={enablePanDownToClose}
       backdropComponent={renderBackdrop}
-      backgroundStyle={[styles.sheetBackground, style]}
-      handleIndicatorStyle={styles.handleIndicator}
+      backgroundStyle={[styles.sheetBackground, themedStyles.sheetBackground, style]}
+      handleIndicatorStyle={[styles.handleIndicator, themedStyles.handleIndicator]}
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustResize"
@@ -128,13 +153,13 @@ export default function BottomSheetWrapper({
         >
           {renderHeader()}
           <View style={styles.contentWrap}>{children}</View>
-          {footer ? <View style={styles.footer}>{footer}</View> : null}
+          {footer ? <View style={[styles.footer, themedStyles.footer]}>{footer}</View> : null}
         </BottomSheetScrollView>
       ) : (
         <BottomSheetView style={styles.viewContainer}>
           {renderHeader()}
           <View style={styles.contentWrap}>{children}</View>
-          {footer ? <View style={styles.footer}>{footer}</View> : null}
+          {footer ? <View style={[styles.footer, themedStyles.footer]}>{footer}</View> : null}
         </BottomSheetView>
       )}
     </GorhomBottomSheetModal>
@@ -143,7 +168,6 @@ export default function BottomSheetWrapper({
 
 const styles = StyleSheet.create({
   sheetBackground: {
-    backgroundColor: colors.white,
     borderTopLeftRadius: radii['5xl'],
     borderTopRightRadius: radii['5xl'],
     borderCurve: 'continuous',
@@ -152,7 +176,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.dragHandle,
   },
   header: {
     flexDirection: 'row',
@@ -168,18 +191,15 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.title,
-    color: colors.ink,
   },
   subtitle: {
     ...typography.caption,
-    color: colors.muted,
     marginTop: spacing['1'],
   },
   closeBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.surfaceControl,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -200,6 +220,5 @@ const styles = StyleSheet.create({
     paddingTop: spacing['4'],
     marginTop: spacing['4'],
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.line,
   },
 });

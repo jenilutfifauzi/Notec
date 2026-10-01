@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Pressable,
   Text,
@@ -8,14 +8,15 @@ import {
   TextStyle,
   StyleProp,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, radii, spacing, typography } from '@/lib/tokens';
-
+import { Icon, Cancel01Icon } from '@/lib/icons';
+import { useTheme } from '@/lib/theme';
+import { radii, spacing, typography } from '@/lib/tokens';
 export interface ChipProps {
   label: string;
   active?: boolean;
   onPress?: () => void;
   icon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
   onClear?: () => void;
   variant?: 'filter' | 'badge';
   style?: StyleProp<ViewStyle>;
@@ -27,12 +28,41 @@ export default function Chip({
   active = false,
   onPress,
   icon,
+  rightIcon,
   onClear,
   variant = 'filter',
   style,
   textStyle,
 }: ChipProps) {
+  const { colors } = useTheme();
   const isBadge = variant === 'badge';
+
+  const themedStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        filterInactive: {
+          backgroundColor: colors.chipInactiveBg,
+          borderColor: colors.chipInactiveBorder,
+        },
+        filterActive: {
+          backgroundColor: colors.chipActiveBg,
+          borderColor: colors.chipActiveBg,
+        },
+        badgeContainer: {
+          backgroundColor: colors.primaryPale,
+        },
+        filterTextInactive: {
+          color: colors.chipInactiveText,
+        },
+        filterTextActive: {
+          color: colors.chipActiveText,
+        },
+        badgeText: {
+          color: colors.primary,
+        },
+      }),
+    [colors],
+  );
 
   const containerContent = (
     <>
@@ -40,12 +70,17 @@ export default function Chip({
       <Text
         style={[
           styles.baseText,
-          isBadge ? styles.badgeText : active ? styles.filterTextActive : styles.filterTextInactive,
+          isBadge
+            ? [styles.badgeText, themedStyles.badgeText]
+            : active
+            ? themedStyles.filterTextActive
+            : themedStyles.filterTextInactive,
           textStyle,
         ]}
       >
         {label}
       </Text>
+      {rightIcon && !onClear ? <View style={styles.rightIconWrap}>{rightIcon}</View> : null}
       {onClear ? (
         <Pressable
           onPress={(e) => {
@@ -57,25 +92,28 @@ export default function Chip({
           accessibilityLabel="Hapus filter"
           style={styles.clearBtn}
         >
-          <Ionicons
-            name="close"
+          <Icon
+            icon={Cancel01Icon}
             size={14}
-            color={active ? colors.white : colors.muted}
+            color={active ? colors.chipActiveText : colors.muted}
           />
         </Pressable>
       ) : null}
     </>
   );
 
+  const containerStyle = [
+    styles.base,
+    isBadge
+      ? [styles.badgeContainer, themedStyles.badgeContainer]
+      : active
+      ? [styles.filterActive, themedStyles.filterActive]
+      : [styles.filterInactive, themedStyles.filterInactive],
+  ];
+
   if (isBadge || !onPress) {
     return (
-      <View
-        style={[
-          styles.base,
-          isBadge ? styles.badgeContainer : active ? styles.filterActive : styles.filterInactive,
-          style,
-        ]}
-      >
+      <View style={[containerStyle, style]}>
         {containerContent}
       </View>
     );
@@ -87,8 +125,7 @@ export default function Chip({
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
       style={({ pressed }) => [
-        styles.base,
-        active ? styles.filterActive : styles.filterInactive,
+        containerStyle,
         pressed && styles.pressed,
         style,
       ]}
@@ -107,23 +144,18 @@ const styles = StyleSheet.create({
     gap: spacing['2'],
   },
   filterInactive: {
-    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radii['4xl'],
     paddingVertical: 7,
     paddingHorizontal: spacing['7'],
   },
   filterActive: {
-    backgroundColor: colors.primary,
     borderWidth: 1,
-    borderColor: colors.primary,
     borderRadius: radii['4xl'],
     paddingVertical: 7,
     paddingHorizontal: spacing['7'],
   },
   badgeContainer: {
-    backgroundColor: colors.primaryPale,
     borderRadius: radii.md,
     paddingVertical: spacing['1'],
     paddingHorizontal: spacing['4'],
@@ -131,14 +163,7 @@ const styles = StyleSheet.create({
   baseText: {
     ...typography.captionBold,
   },
-  filterTextInactive: {
-    color: colors.muted,
-  },
-  filterTextActive: {
-    color: colors.white,
-  },
   badgeText: {
-    color: colors.primary,
     fontSize: 11,
   },
   iconWrap: {
@@ -147,6 +172,11 @@ const styles = StyleSheet.create({
   },
   clearBtn: {
     marginLeft: 2,
+  },
+  rightIconWrap: {
+    marginLeft: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   pressed: {
     opacity: 0.8,

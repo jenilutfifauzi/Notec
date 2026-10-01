@@ -8,7 +8,16 @@ import {
   Alert,
 } from 'react-native';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  Icon,
+  SaleTag01Icon,
+  ChevronRightIcon,
+  CloudUploadIcon,
+  CloudDownloadIcon,
+  Delete01Icon,
+  SecurityCheckIcon,
+  AlertCircleIcon,
+} from '@/lib/icons';
 import * as FileSystem from 'expo-file-system/legacy';
 import { File as ExpoFile } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -22,8 +31,8 @@ import {
 } from '../db/queries/backup';
 import { encryptBackup, decryptBackup } from '../lib/crypto';
 import ConfirmDialog from '@/components/organisms/ConfirmDialog';
+import { useTheme } from '@/lib/theme';
 import {
-  colors,
   radii,
   spacing,
   typography,
@@ -35,9 +44,8 @@ import {
   Button,
   Toast,
 } from '@/components/ui';
-
 export default function SettingsScreen() {
-  // Backup modal state
+  const { colors } = useTheme();
   const [backupModalVisible, setBackupModalVisible] = useState(false);
   const [backupPassword, setBackupPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -242,8 +250,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Blue Header */}
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <ScreenHeader
         title="Pengaturan"
         onBack={() => router.back()}
@@ -258,18 +265,18 @@ export default function SettingsScreen() {
         <SectionHeader title="KATEGORI" variant="overline" style={styles.sectionHeaderWrap} />
         <Card style={styles.menuCard}>
           <Pressable
-            style={[styles.menuRow, styles.menuRowLast]}
+            style={[styles.menuRow, styles.menuRowLast, { borderBottomColor: colors.line }]}
             onPress={() => router.push('/categories')}
             accessibilityRole="button"
           >
             <View style={[styles.menuIconWrap, { backgroundColor: '#fef3c7' }]}>
-              <Ionicons name="pricetags-outline" size={20} color="#d97706" />
+              <Icon icon={SaleTag01Icon} size={20} color="#d97706" />
             </View>
             <View style={styles.menuTextWrap}>
-              <Text style={styles.menuTitle}>Kelola kategori</Text>
-              <Text style={styles.menuSubtitle}>Tambah, ubah, atau arsipkan kategori</Text>
+              <Text style={[styles.menuTitle, { color: colors.ink }]}>Kelola kategori</Text>
+              <Text style={[styles.menuSubtitle, { color: colors.muted }]}>Tambah, ubah, atau arsipkan kategori</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.chevron} />
+            <Icon icon={ChevronRightIcon} size={18} color={colors.chevron} />
           </Pressable>
         </Card>
 
@@ -277,27 +284,27 @@ export default function SettingsScreen() {
         <SectionHeader title="DATA & CADANGAN" variant="overline" style={styles.sectionHeaderWrap} />
         <Card style={styles.menuCard}>
           {/* Cadangkan Data */}
-          <Pressable style={styles.menuRow} onPress={handleStartBackup} accessibilityRole="button">
+          <Pressable style={[styles.menuRow, { borderBottomColor: colors.line }]} onPress={handleStartBackup} accessibilityRole="button">
             <View style={[styles.menuIconWrap, { backgroundColor: colors.primaryPale }]}>
-              <Ionicons name="cloud-upload-outline" size={20} color={colors.primary} />
+              <Icon icon={CloudUploadIcon} size={20} color={colors.primary} />
             </View>
             <View style={styles.menuTextWrap}>
-              <Text style={styles.menuTitle}>Cadangkan data</Text>
-              <Text style={styles.menuSubtitle}>Ekspor data terenkripsi sandi (.ckbackup)</Text>
+              <Text style={[styles.menuTitle, { color: colors.ink }]}>Cadangkan data</Text>
+              <Text style={[styles.menuSubtitle, { color: colors.muted }]}>Ekspor data terenkripsi sandi (.ckbackup)</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.chevron} />
+            <Icon icon={ChevronRightIcon} size={18} color={colors.chevron} />
           </Pressable>
 
           {/* Pulihkan Cadangan */}
-          <Pressable style={styles.menuRow} onPress={handleStartRestore} accessibilityRole="button">
-            <View style={[styles.menuIconWrap, { backgroundColor: '#e0f2fe' }]}>
-              <Ionicons name="cloud-download-outline" size={20} color="#0284c7" />
+          <Pressable style={[styles.menuRow, { borderBottomColor: colors.line }]} onPress={handleStartRestore} accessibilityRole="button">
+            <View style={[styles.menuIconWrap, { backgroundColor: colors.transactionIconBg }]}>
+              <Icon icon={CloudDownloadIcon} size={20} color={colors.transactionIconColor} />
             </View>
             <View style={styles.menuTextWrap}>
-              <Text style={styles.menuTitle}>Pulihkan cadangan</Text>
-              <Text style={styles.menuSubtitle}>Buka dan pulihkan berkas .ckbackup</Text>
+              <Text style={[styles.menuTitle, { color: colors.ink }]}>Pulihkan cadangan</Text>
+              <Text style={[styles.menuSubtitle, { color: colors.muted }]}>Buka dan pulihkan berkas .ckbackup</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.chevron} />
+            <Icon icon={ChevronRightIcon} size={18} color={colors.chevron} />
           </Pressable>
 
           {/* Hapus Semua Data */}
@@ -307,31 +314,30 @@ export default function SettingsScreen() {
             accessibilityRole="button"
           >
             <View style={[styles.menuIconWrap, { backgroundColor: '#fee2e2' }]}>
-              <Ionicons name="trash-outline" size={20} color={colors.red} />
+              <Icon icon={Delete01Icon} size={20} color={colors.red} />
             </View>
             <View style={styles.menuTextWrap}>
-              <Text style={[styles.menuTitle, styles.destructiveText]}>Hapus semua data</Text>
-              <Text style={styles.menuSubtitle}>Hapus semua transaksi dan atur ulang kategori</Text>
+              <Text style={[styles.menuTitle, styles.destructiveText, { color: colors.red }]}>Hapus semua data</Text>
+              <Text style={[styles.menuSubtitle, { color: colors.muted }]}>Hapus semua transaksi dan atur ulang kategori</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.chevron} />
+            <Icon icon={ChevronRightIcon} size={18} color={colors.chevron} />
           </Pressable>
         </Card>
-
         {/* Info Card */}
         <Card style={styles.infoCard}>
-          <Ionicons
-            name="shield-checkmark-outline"
+          <Icon
+            icon={SecurityCheckIcon}
             size={22}
             color={colors.primary}
             style={styles.infoIcon}
           />
           <View style={styles.infoTextContainer}>
-            <Text style={styles.infoTitle}>Penyimpanan Lokal & Terenkripsi</Text>
-            <Text style={styles.infoBody}>
+            <Text style={[styles.infoTitle, { color: colors.ink }]}>Penyimpanan Lokal & Terenkripsi</Text>
+            <Text style={[styles.infoBody, { color: colors.subtle }]}>
               Seluruh catatan keuangan Anda tersimpan offline di perangkat ini. Berkas cadangan
               diamankan dengan enkripsi standar AES-GCM 256-bit dan PBKDF2.
             </Text>
-            <Text style={[styles.infoBody, { marginTop: 6 }]}>
+            <Text style={[styles.infoBody, { color: colors.subtle, marginTop: 6 }]}>
               Menghapus aplikasi dapat menghilangkan data. Buat cadangan secara berkala sebelum
               berpindah perangkat.
             </Text>
@@ -340,11 +346,10 @@ export default function SettingsScreen() {
 
         {/* App Info */}
         <View style={styles.appInfo}>
-          <Text style={styles.appInfoText}>Catatan Keuangan v1.0.0</Text>
-          <Text style={styles.appInfoSub}>Aplikasi Pelacak Keuangan Pribadi Offline</Text>
+          <Text style={[styles.appInfoText, { color: colors.muted }]}>Catatan Keuangan v1.0.0</Text>
+          <Text style={[styles.appInfoSub, { color: colors.sectionHeader }]}>Aplikasi Pelacak Keuangan Pribadi Offline</Text>
         </View>
       </ScrollView>
-
       {/* Backup Password Modal */}
       <BottomSheetModal
         visible={backupModalVisible}
@@ -376,9 +381,9 @@ export default function SettingsScreen() {
           containerStyle={{ marginTop: spacing['4'] }}
         />
 
-        <View style={styles.warningBox}>
-          <Ionicons name="alert-circle-outline" size={18} color={colors.warningIcon} />
-          <Text style={styles.warningText}>
+        <View style={[styles.warningBox, { backgroundColor: colors.warningBg, borderColor: colors.warningBorder }]}>
+          <Icon icon={AlertCircleIcon} size={18} color={colors.warningIcon} />
+          <Text style={[styles.warningText, { color: colors.warningText }]}>
             Sandi ini tidak dapat dipulihkan jika lupa. Simpan atau ingat sandi dengan baik.
           </Text>
         </View>
@@ -468,7 +473,6 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg,
   },
   scroll: {
     flex: 1,
@@ -492,7 +496,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: spacing['8'],
     borderBottomWidth: 1,
-    borderBottomColor: colors.line,
   },
   menuRowLast: {
     borderBottomWidth: 0,
@@ -511,15 +514,11 @@ const styles = StyleSheet.create({
   },
   menuTitle: {
     ...typography.bodyBold,
-    color: colors.ink,
   },
-  destructiveText: {
-    color: colors.red,
-  },
+  destructiveText: {},
   menuSubtitle: {
     ...typography.caption,
     fontSize: 11,
-    color: colors.muted,
     marginTop: 2,
   },
   infoCard: {
@@ -535,13 +534,11 @@ const styles = StyleSheet.create({
   },
   infoTitle: {
     ...typography.label,
-    color: colors.ink,
     marginBottom: 4,
   },
   infoBody: {
     ...typography.caption,
     fontSize: 11,
-    color: colors.subtle,
     lineHeight: 16,
   },
   appInfo: {
@@ -550,20 +547,16 @@ const styles = StyleSheet.create({
   },
   appInfoText: {
     ...typography.captionBold,
-    color: colors.muted,
   },
   appInfoSub: {
     ...typography.overline,
     fontSize: 10,
-    color: colors.sectionHeader,
     marginTop: 2,
     textTransform: 'none',
   },
   warningBox: {
     flexDirection: 'row',
-    backgroundColor: colors.warningBg,
     borderWidth: 1,
-    borderColor: colors.warningBorder,
     borderRadius: radii.md,
     borderCurve: 'continuous',
     padding: spacing['6'],
@@ -574,13 +567,11 @@ const styles = StyleSheet.create({
   warningText: {
     ...typography.caption,
     fontSize: 11,
-    color: colors.warningText,
     lineHeight: 16,
     flex: 1,
   },
   errorText: {
     ...typography.captionBold,
-    color: colors.red,
     marginTop: spacing['4'],
   },
   modalActions: {

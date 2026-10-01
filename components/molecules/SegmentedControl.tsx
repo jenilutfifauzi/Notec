@@ -7,7 +7,8 @@ import {
   ViewStyle,
   StyleProp,
 } from 'react-native';
-import { colors, radii, spacing, typography } from '@/lib/tokens';
+import { useTheme } from '@/lib/theme';
+import { radii, spacing, typography } from '@/lib/tokens';
 
 export interface SegmentItem<T extends string> {
   value: T;
@@ -29,8 +30,10 @@ export default function SegmentedControl<T extends string>({
   colorMap,
   style,
 }: SegmentedControlProps<T>) {
+  const { mode, colors } = useTheme();
+
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, { backgroundColor: colors.surfaceControl }, style]}>
       {segments.map((item) => {
         const isActive = item.value === selected;
         const activeColor = colorMap?.[item.value] || colors.primary;
@@ -41,12 +44,22 @@ export default function SegmentedControl<T extends string>({
             onPress={() => onChange(item.value)}
             accessibilityRole="tab"
             accessibilityState={{ selected: isActive }}
-            style={[styles.segment, isActive && styles.segmentActive]}
+            style={[
+              styles.segment,
+              isActive && [
+                styles.segmentActive,
+                {
+                  backgroundColor: colors.segmentActiveBg,
+                  boxShadow: mode === 'dark' ? 'none' : '0 1px 3px rgba(220, 227, 239, 0.9)',
+                  elevation: mode === 'dark' ? 0 : 2,
+                },
+              ],
+            ]}
           >
             <Text
               style={[
                 styles.segmentText,
-                isActive ? { color: activeColor } : styles.segmentTextInactive,
+                isActive ? { color: activeColor } : { color: colors.muted },
               ]}
             >
               {item.label}
@@ -61,7 +74,6 @@ export default function SegmentedControl<T extends string>({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: colors.surfaceControl,
     padding: spacing['1'],
     borderRadius: radii.lg,
     borderCurve: 'continuous',
@@ -74,15 +86,8 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     borderCurve: 'continuous',
   },
-  segmentActive: {
-    backgroundColor: colors.white,
-    boxShadow: '0 1px 3px rgba(220, 227, 239, 0.9)',
-    elevation: 2,
-  },
+  segmentActive: {},
   segmentText: {
     ...typography.label,
-  },
-  segmentTextInactive: {
-    color: colors.muted,
   },
 });

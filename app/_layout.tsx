@@ -8,16 +8,17 @@ import { useEffect, useState } from 'react';
 import { db, getDbInitError } from '../db/client';
 import { seedCategories } from '../db/seed';
 import migrations from '../drizzle/migrations';
-import { colors, typography } from '@/components/ui';
+import { typography } from '@/components/ui';
+import { ThemeProvider, useTheme, lightColors } from '@/lib/theme';
 import {
   useFonts,
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-  Inter_800ExtraBold,
-  Inter_900Black,
-} from '@expo-google-fonts/inter';
+  Geist_400Regular,
+  Geist_500Medium,
+  Geist_600SemiBold,
+  Geist_700Bold,
+  Geist_800ExtraBold,
+  Geist_900Black,
+} from '@expo-google-fonts/geist';
 
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
   const isSharedArrayBufferError = error.message?.includes('SharedArrayBuffer');
@@ -42,7 +43,9 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => voi
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <RootLayoutInner />
+      <ThemeProvider>
+        <RootLayoutInner />
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }
@@ -70,20 +73,14 @@ function RootLayoutInner() {
 }
 
 function RootLayoutContent() {
+  const { mode, colors } = useTheme();
   const [fontsLoaded, fontError] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
-    Inter_800ExtraBold,
-    Inter_900Black,
-    'Inter': Inter_400Regular,
-    'Inter-Regular': Inter_400Regular,
-    'Inter-Medium': Inter_500Medium,
-    'Inter-SemiBold': Inter_600SemiBold,
-    'Inter-Bold': Inter_700Bold,
-    'Inter-ExtraBold': Inter_800ExtraBold,
-    'Inter-Black': Inter_900Black,
+    Geist_400Regular,
+    Geist_500Medium,
+    Geist_600SemiBold,
+    Geist_700Bold,
+    Geist_800ExtraBold,
+    Geist_900Black,
   });
   const { success, error } = useMigrations(db, migrations);
   const [seeded, setSeeded] = useState(false);
@@ -108,7 +105,7 @@ function RootLayoutContent() {
 
   if (!success || !seeded || (!fontsLoaded && !fontError)) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -116,7 +113,7 @@ function RootLayoutContent() {
 
   return (
     <BottomSheetModalProvider>
-        <StatusBar style="light" />
+        <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
         <Stack
           screenOptions={{
             headerShown: false,
@@ -155,26 +152,26 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.bg,
+    backgroundColor: lightColors.bg,
     padding: 24,
   },
   errorTitle: {
     ...typography.title,
     fontSize: 16,
-    color: colors.ink,
+    color: lightColors.ink,
     marginBottom: 8,
     textAlign: 'center',
   },
   errorText: {
     ...typography.caption,
-    color: colors.red,
+    color: lightColors.red,
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 18,
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: lightColors.primary,
     borderRadius: 10,
     borderCurve: 'continuous',
     paddingVertical: 10,
@@ -183,7 +180,7 @@ const styles = StyleSheet.create({
   },
   retryText: {
     ...typography.captionBold,
-    color: colors.white,
+    color: lightColors.white,
     fontSize: 13,
   },
 });

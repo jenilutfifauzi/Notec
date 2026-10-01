@@ -2,36 +2,36 @@ import { Platform } from 'react-native';
 
 export const colors = {
   // Brand
-  primary: '#2451bf',
-  primaryDeep: '#1b429f',
-  primaryPale: '#eaf0ff',
-  primaryBarInactive: '#c7d6fa',
+  primary: '#5B9A3C',
+  primaryDeep: '#3D7A26',
+  primaryPale: '#E7F0D9',
+  primaryBarInactive: '#183A27',
   // Aliases for backward compatibility with COLORS
-  pale: '#eaf0ff',
-  barInactive: '#c7d6fa',
+  pale: '#E7F0D9',
+  barInactive: '#183A27',
 
   // Surfaces
-  bg: '#f3f6fc',
-  white: '#ffffff',
-  surfaceInput: '#f8fafd',
-  surfaceControl: '#f1f4fa',
-  surfaceTip: '#f4f7fe',
-  surfaceDashed: '#f8faff',
+  bg: '#FFFDF8',
+  white: '#FFFDF8',
+  surfaceInput: '#FFFDF8',
+  surfaceControl: '#E7F0D9',
+  surfaceTip: '#E7F0D9',
+  surfaceDashed: '#F7FAF0',
 
   // Text
-  ink: '#18243c',
-  muted: '#8190a8',
-  subtle: '#64748b',
-  placeholder: '#9ca3af',
+  ink: '#183A27',
+  muted: '#587066',
+  subtle: '#587066',
+  placeholder: '#777777',
 
   // Borders
-  line: '#e8edf5',
-  border: '#d7e1f3',
-  borderSecondary: '#d2def4',
-  borderInput: '#e2e8f0',
-  borderDashed: '#b5c9ef',
-  borderHighlight: '#bdd0ff',
-  dragHandle: '#d7dfec',
+  line: '#D1E2C9',
+  border: '#D1E2C9',
+  borderSecondary: '#D1E2C9',
+  borderInput: '#D1E2C9',
+  borderDashed: '#B7D493',
+  borderHighlight: '#9DC86A',
+  dragHandle: '#B7D493',
 
   // Semantic
   green: '#14996b',
@@ -48,24 +48,55 @@ export const colors = {
   errorBorder: '#fecaca',
 
   // Overlays
-  overlayLight: 'rgba(15, 23, 42, 0.45)',
-  overlayDark: 'rgba(28, 44, 75, 0.55)',
+  overlayLight: 'rgba(6, 59, 27, 0.45)',
+  overlayDark: 'rgba(24, 58, 39, 0.55)',
 
   // Toast
-  toastBg: '#1a2a48',
-  toastAction: '#91acff',
+  toastBg: '#183A27',
+  toastAction: '#d9f77b',
 
   // Hero-specific
-  heroSubtitle: '#d4e1ff',
-  heroBalanceLabel: '#d7e3ff',
-  heroIconBorder: '#88a9ec',
-  heroIconBg: 'rgba(255, 255, 255, 0.15)',
+  heroSubtitle: '#063b1b',
+  heroBalanceLabel: '#063b1b',
+  heroIconBorder: '#6F9F4266',
+  heroIconBg: '#21451f',
 
   // Chevron/icon tints
-  chevron: '#b5c1d3',
-  iconMuted: '#758cb6',
-  sectionHeader: '#8896aa',
-} as const;
+  chevron: '#587066',
+  iconMuted: '#587066',
+  sectionHeader: '#587066',
+
+  // Tab bar
+  tabBarBg: '#F7FAF0',
+
+  // Search input (Riwayat)
+  searchBg: '#EFF8DA',
+  searchBorder: '#9DC86A',
+
+  // Segmented control active segment
+  segmentActiveBg: '#FFFFFF',
+
+  // Chip active
+  chipActiveBg: '#5B9A3C',
+  chipActiveText: '#FFFDF8',
+  chipInactiveBg: '#FFFDF8',
+  chipInactiveText: '#587066',
+  chipInactiveBorder: '#D1E2C9',
+
+  // Button primary for dark mode
+  buttonPrimaryBg: '#5B9A3C',
+  buttonPrimaryText: '#FFFDF8',
+
+  // Transaction icon
+  transactionIconBg: '#E7F0D9',
+  transactionIconColor: '#5B9A3C',
+  transactionIconIncomeColor: '#183A27',
+
+  // Hero stacked cards
+  heroStack1: '#B8D990',
+  heroStack2: '#CBE4B3',
+  heroStack3: '#DCEBCB',
+};
 
 export const radii = {
   xs: 6,
@@ -101,12 +132,12 @@ export const spacing = {
 } as const;
 
 export const fontFamilies = {
-  regular: 'Inter_400Regular',
-  medium: 'Inter_500Medium',
-  semiBold: 'Inter_600SemiBold',
-  bold: 'Inter_700Bold',
-  extraBold: 'Inter_800ExtraBold',
-  black: 'Inter_900Black',
+  regular: 'Geist_400Regular',
+  medium: 'Geist_500Medium',
+  semiBold: 'Geist_600SemiBold',
+  bold: 'Geist_700Bold',
+  extraBold: 'Geist_800ExtraBold',
+  black: 'Geist_900Black',
 } as const;
 
 // On Android, custom fonts loaded via expo-font are registered under Typeface.NORMAL.
@@ -178,11 +209,11 @@ export const typography = {
 } as const;
 
 export const shadows = {
-  card: { boxShadow: '0 6px 16px rgba(31, 63, 119, 0.05)', elevation: 2 },
-  cardLight: { boxShadow: '0 6px 16px rgba(31, 63, 119, 0.03)', elevation: 1 },
-  button: { boxShadow: '0 4px 12px rgba(36, 81, 191, 0.25)', elevation: 3 },
-  buttonHero: { boxShadow: '0 4px 10px rgba(36, 81, 191, 0.35)', elevation: 4 },
-  dialog: { boxShadow: '0 8px 24px rgba(28, 44, 75, 0.25)', elevation: 8 },
-  toast: { boxShadow: '0 4px 12px rgba(26, 42, 72, 0.35)', elevation: 6 },
-  sheet: { boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.1)', elevation: 8 },
-} as const;
+  card: { boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)', elevation: 1 },
+  cardLight: { boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)', elevation: 1 },
+  button: { boxShadow: '0 2px 6px rgba(36, 81, 191, 0.2)', elevation: 2 },
+  buttonHero: { boxShadow: '0 3px 8px rgba(36, 81, 191, 0.2)', elevation: 3 },
+  dialog: { boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)', elevation: 6 },
+  toast: { boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)', elevation: 4 },
+  sheet: { boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.08)', elevation: 6 },
+};

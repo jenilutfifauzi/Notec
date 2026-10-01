@@ -30,7 +30,7 @@ export type CategoryExpense = {
 
 const INDONESIAN_MONTH_SHORT = [
   'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-  'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'
+  'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
 ];
 
 function getMonthDateRange(year: number, month: number): { start: string; end: string } {

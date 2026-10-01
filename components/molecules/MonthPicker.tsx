@@ -1,8 +1,9 @@
 import React from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon, ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon, CancelCircleIcon } from '@/lib/icons';
 import { monthYearFormatter } from '@/lib/format';
-import { colors, radii, typography } from '@/lib/tokens';
+import { useTheme } from '@/lib/theme';
+import { radii, typography, fontFamilies } from '@/lib/tokens';
 
 export interface MonthPickerProps {
   year: number;
@@ -25,11 +26,12 @@ export default function MonthPicker({
   hasCustomFilter,
   onClearCustomFilter,
 }: MonthPickerProps) {
+  const { colors } = useTheme();
   const isHero = variant === 'hero';
 
   const date = new Date(year, month - 1, 1);
   const formatted = monthYearFormatter.format(date);
-
+  const displayText = (customLabel || formatted).replace(/\s*⌄$/, '');
   const handlePrev = () => {
     if (month === 1) {
       onChange(year - 1, 12);
@@ -48,26 +50,28 @@ export default function MonthPicker({
 
   return (
     <View style={[styles.container, isHero ? styles.heroContainer : styles.lightContainer]}>
-      <Pressable
-        onPress={handlePrev}
-        style={styles.arrowButton}
-        hitSlop={8}
-        accessibilityLabel="Bulan sebelumnya"
-        accessibilityRole="button"
-      >
-        <Ionicons
-          name="chevron-back"
-          size={18}
-          color={isHero ? colors.white : colors.iconMuted}
-        />
-      </Pressable>
+      {!isHero ? (
+        <Pressable
+          onPress={handlePrev}
+          style={styles.arrowButton}
+          hitSlop={8}
+          accessibilityLabel="Bulan sebelumnya"
+          accessibilityRole="button"
+        >
+          <Icon
+            icon={ChevronLeftIcon}
+            size={18}
+            color={colors.iconMuted}
+          />
+        </Pressable>
+      ) : null}
 
       {onPressTitle ? (
         <Pressable
           onPress={onPressTitle}
           style={[
             styles.titleButton,
-            hasCustomFilter ? styles.titleButtonActive : null,
+            hasCustomFilter ? [styles.titleButtonActive, { backgroundColor: colors.primaryPale }] : null,
           ]}
           hitSlop={6}
           accessibilityRole="button"
@@ -76,22 +80,34 @@ export default function MonthPicker({
           <Text
             style={[
               styles.monthText,
-              isHero ? styles.heroText : styles.lightText,
-              hasCustomFilter ? styles.customFilterText : null,
+              isHero ? styles.heroText : [styles.lightText, { color: colors.ink }],
+              hasCustomFilter ? { color: colors.primary } : null,
             ]}
           >
-            {customLabel || formatted}
+            {displayText}
           </Text>
-          <Ionicons
-            name="chevron-down"
-            size={13}
-            color={hasCustomFilter ? colors.primary : isHero ? colors.white : colors.iconMuted}
-          />
+          {!isHero ? (
+            <Icon
+              icon={ChevronDownIcon}
+              size={13}
+              color={hasCustomFilter ? colors.primary : colors.iconMuted}
+            />
+          ) : null}
         </Pressable>
       ) : (
-        <Text style={[styles.monthText, isHero ? styles.heroText : styles.lightText]}>
-          {customLabel || formatted}
-        </Text>
+        <View style={isHero ? styles.heroContentRow : null}>
+          <Text
+            style={[
+              styles.monthText,
+              isHero ? styles.heroText : [styles.lightText, { color: colors.ink }],
+            ]}
+          >
+            {displayText}
+          </Text>
+          {isHero ? (
+            <Icon icon={ChevronDownIcon} size={12} color="#063b1b" strokeWidth={1.75} />
+          ) : null}
+        </View>
       )}
 
       {hasCustomFilter && onClearCustomFilter ? (
@@ -102,23 +118,25 @@ export default function MonthPicker({
           accessibilityLabel="Hapus filter tanggal"
           accessibilityRole="button"
         >
-          <Ionicons name="close-circle" size={16} color={colors.muted} />
+          <Icon icon={CancelCircleIcon} size={16} color={colors.muted} />
         </Pressable>
       ) : null}
 
-      <Pressable
-        onPress={handleNext}
-        style={styles.arrowButton}
-        hitSlop={8}
-        accessibilityLabel="Bulan berikutnya"
-        accessibilityRole="button"
-      >
-        <Ionicons
-          name="chevron-forward"
-          size={18}
-          color={isHero ? colors.white : colors.iconMuted}
-        />
-      </Pressable>
+      {!isHero ? (
+        <Pressable
+          onPress={handleNext}
+          style={styles.arrowButton}
+          hitSlop={8}
+          accessibilityLabel="Bulan berikutnya"
+          accessibilityRole="button"
+        >
+          <Icon
+            icon={ChevronRightIcon}
+            size={18}
+            color={colors.iconMuted}
+          />
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -131,14 +149,20 @@ const styles = StyleSheet.create({
   },
   heroContainer: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: '#e7f2b0',
     borderWidth: 1,
-    borderColor: colors.borderHighlight,
-    borderRadius: radii['5xl'],
+    borderColor: '#063b1b55',
+    borderRadius: 10,
     borderCurve: 'continuous',
-    paddingVertical: 4,
-    paddingHorizontal: 6,
-    gap: 8,
+    height: 34,
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  heroContentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   lightContainer: {
     paddingVertical: 6,
@@ -157,12 +181,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderRadius: radii['2xl'],
   },
-  titleButtonActive: {
-    backgroundColor: colors.primaryPale,
-  },
-  customFilterText: {
-    color: colors.primary,
-  },
+  titleButtonActive: {},
+  customFilterText: {},
   clearBtn: {
     padding: 4,
   },
@@ -171,11 +191,12 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   heroText: {
-    color: colors.white,
+    color: '#063b1b',
+    fontFamily: fontFamilies.semiBold,
     fontSize: 12,
+    letterSpacing: 0,
   },
   lightText: {
     ...typography.titleSmall,
-    color: colors.ink,
   },
 });

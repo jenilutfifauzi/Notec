@@ -7,9 +7,9 @@ import {
   ViewStyle,
   StyleProp,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, radii, spacing, typography, fontFamilies } from '@/lib/tokens';
-
+import { Icon, ChevronRightIcon } from '@/lib/icons';
+import { useTheme } from '@/lib/theme';
+import { radii, spacing, typography, fontFamilies } from '@/lib/tokens';
 export interface SelectFieldProps {
   label?: string;
   value?: string;
@@ -31,11 +31,12 @@ export default function SelectField({
   error,
   style,
 }: SelectFieldProps) {
+  const { colors } = useTheme();
   const hasValue = Boolean(value);
 
   return (
     <View style={styles.wrapper}>
-      {label ? <Text style={styles.label}>{label}</Text> : null}
+      {label ? <Text style={[styles.label, { color: colors.ink }]}>{label}</Text> : null}
 
       <Pressable
         onPress={onPress}
@@ -43,7 +44,8 @@ export default function SelectField({
         accessibilityLabel={label ? `${label}: ${value || placeholder}` : value || placeholder}
         style={({ pressed }) => [
           styles.container,
-          error ? styles.containerError : null,
+          { backgroundColor: colors.white, borderColor: colors.border },
+          error ? { borderColor: colors.red } : null,
           pressed && styles.pressed,
           style,
         ]}
@@ -53,7 +55,7 @@ export default function SelectField({
           <Text
             style={[
               styles.text,
-              hasValue ? styles.valueText : styles.placeholderText,
+              hasValue ? [styles.valueText, { color: colors.ink }] : [styles.placeholderText, { color: colors.placeholder }],
             ]}
             numberOfLines={1}
           >
@@ -64,11 +66,10 @@ export default function SelectField({
         {rightIcon ? (
           <View style={styles.rightIconWrap}>{rightIcon}</View>
         ) : (
-          <Ionicons name="chevron-forward" size={18} color={colors.placeholder} />
+          <Icon icon={ChevronRightIcon} size={18} color={colors.primary} />
         )}
       </Pressable>
-
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error ? <Text style={[styles.errorText, { color: colors.red }]}>{error}</Text> : null}
     </View>
   );
 }
@@ -79,24 +80,18 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.captionBold,
-    color: colors.ink,
     marginBottom: spacing['3'],
   },
   container: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surfaceInput,
     borderWidth: 1,
-    borderColor: colors.borderInput,
     borderRadius: radii.lg,
     borderCurve: 'continuous',
     paddingHorizontal: spacing['7'],
     paddingVertical: spacing['6'],
     minHeight: 48,
-  },
-  containerError: {
-    borderColor: colors.red,
   },
   contentRow: {
     flexDirection: 'row',
@@ -114,18 +109,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   valueText: {
-    color: colors.ink,
     fontFamily: fontFamilies.medium,
   },
-  placeholderText: {
-    color: colors.placeholder,
-  },
+  placeholderText: {},
   rightIconWrap: {
     marginLeft: spacing['2'],
   },
   errorText: {
     ...typography.caption,
-    color: colors.red,
     marginTop: spacing['2'],
   },
   pressed: {

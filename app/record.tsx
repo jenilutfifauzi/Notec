@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon, Calendar01Icon } from '@/lib/icons';
 import DateTimePicker, { DateTimePickerChangeEvent } from '@react-native-community/datetimepicker';
 import { Category } from '../db/schema';
 import {
@@ -26,8 +26,8 @@ import {
   formatDate,
   getTodayDateString,
 } from '../lib/format';
+import { useTheme } from '@/lib/theme';
 import {
-  colors,
   radii,
   spacing,
   typography,
@@ -39,8 +39,8 @@ import {
   Button,
   CategoryDot,
 } from '@/components/ui';
-
 export default function RecordScreen() {
+  const { colors } = useTheme();
   const params = useLocalSearchParams<{ id?: string }>();
   const editId = params.id ? Number(params.id) : null;
   const isEditing = Boolean(editId && !isNaN(editId));
@@ -192,7 +192,7 @@ export default function RecordScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { backgroundColor: colors.white }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -200,7 +200,7 @@ export default function RecordScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.white }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScreenHeader
@@ -221,17 +221,17 @@ export default function RecordScreen() {
           ]}
           selected={type}
           onChange={handleTypeChange}
-          colorMap={{ expense: colors.primary, income: colors.green }}
+          colorMap={{ expense: colors.ink, income: colors.ink }}
           style={styles.segmented}
         />
 
         {/* Nominal Field */}
         <View style={styles.field}>
-          <Text style={styles.label}>Nominal</Text>
-          <View style={styles.moneyInputWrap}>
-            <Text style={styles.moneyPrefix}>Rp</Text>
+          <Text style={[styles.label, { color: colors.ink }]}>Nominal</Text>
+          <View style={[styles.moneyInputWrap, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.moneyPrefix, { color: colors.muted }]}>Rp</Text>
             <RNTextInput
-              style={styles.moneyInput}
+              style={[styles.moneyInput, { color: colors.ink }]}
               value={amountStr}
               onChangeText={handleAmountChange}
               placeholder="0"
@@ -269,7 +269,7 @@ export default function RecordScreen() {
             value={formatDate(dateStr)}
             onPress={() => setShowDatePicker(true)}
             leftIcon={
-              <Ionicons name="calendar-outline" size={18} color={colors.muted} />
+              <Icon icon={Calendar01Icon} size={18} color={colors.muted} />
             }
           />
         </View>
@@ -277,7 +277,7 @@ export default function RecordScreen() {
         {/* Date Picker Component */}
         {showDatePicker ? (
           Platform.OS === 'ios' ? (
-            <View style={styles.iosDatePickerContainer}>
+            <View style={[styles.iosDatePickerContainer, { backgroundColor: colors.surfaceInput, borderColor: colors.borderInput }]}>
               <DateTimePicker
                 value={dateObj}
                 mode="date"
@@ -317,12 +317,10 @@ export default function RecordScreen() {
 
         {/* Error Text Banner */}
         {errorText ? (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorBannerText}>{errorText}</Text>
+          <View style={[styles.errorBanner, { backgroundColor: colors.errorBg, borderColor: colors.errorBorder }]}>
+            <Text style={[styles.errorBannerText, { color: colors.red }]}>{errorText}</Text>
           </View>
         ) : null}
-
-        {/* Save Button */}
         <Button
           title={isEditing ? 'Perbarui transaksi' : 'Simpan transaksi'}
           onPress={handleSave}
@@ -353,13 +351,11 @@ export default function RecordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.white,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.white,
   },
   scroll: {
     flex: 1,
@@ -376,14 +372,12 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.captionBold,
-    color: colors.ink,
     marginBottom: spacing['3'],
   },
   moneyInputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1.5,
-    borderBottomColor: colors.border,
     paddingBottom: spacing['4'],
     gap: spacing['4'],
   },
@@ -391,40 +385,33 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.bold,
     fontSize: 22,
     fontWeight: Platform.OS === 'android' ? undefined : '700',
-    color: colors.muted,
   },
   moneyInput: {
     ...typography.displayLarge,
     flex: 1,
-    color: colors.ink,
     letterSpacing: -0.5,
     padding: 0,
   },
   iosDatePickerContainer: {
-    backgroundColor: colors.surfaceInput,
     borderRadius: radii.lg,
     borderCurve: 'continuous',
     padding: spacing['5'],
     marginTop: -spacing['4'],
     marginBottom: spacing['8'],
     borderWidth: 1,
-    borderColor: colors.borderInput,
   },
   doneDateBtn: {
     marginTop: spacing['3'],
   },
   errorBanner: {
     marginBottom: spacing['8'],
-    backgroundColor: colors.errorBg,
     padding: spacing['5'],
     borderRadius: radii.sm,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: colors.errorBorder,
   },
   errorBannerText: {
     ...typography.caption,
-    color: colors.red,
   },
   saveBtn: {
     marginTop: spacing['4'],

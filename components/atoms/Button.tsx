@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Pressable,
   Text,
@@ -10,8 +10,8 @@ import {
   View,
   Platform,
 } from 'react-native';
-import { colors, radii, shadows, fontFamilies } from '@/lib/tokens';
-
+import { useTheme } from '@/lib/theme';
+import { radii, fontFamilies } from '@/lib/tokens';
 export type ButtonVariant = 'primary' | 'outline' | 'destructive' | 'dashed' | 'ghost';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
@@ -42,7 +42,66 @@ export default function Button({
   style,
   textStyle,
 }: ButtonProps) {
+  const { colors, shadows } = useTheme();
   const isDisabled = disabled || loading;
+
+  const themedStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        primary: {
+          backgroundColor: colors.buttonPrimaryBg,
+        },
+        outline: {
+          backgroundColor: 'transparent',
+          borderWidth: 1,
+          borderColor: colors.borderSecondary,
+        },
+        destructive: {
+          backgroundColor: colors.red,
+        },
+        dashed: {
+          backgroundColor: colors.surfaceDashed,
+          borderWidth: 1,
+          borderStyle: 'dashed',
+          borderColor: colors.borderDashed,
+        },
+        ghost: {
+          backgroundColor: 'transparent',
+        },
+        primaryText: {
+          color: colors.buttonPrimaryText,
+        },
+        outlineText: {
+          color: colors.primary,
+        },
+        destructiveText: {
+          color: colors.white,
+        },
+        dashedText: {
+          color: colors.primary,
+        },
+        ghostText: {
+          color: colors.primary,
+        },
+      }),
+    [colors],
+  );
+
+  const variantStyleMap = {
+    primary: themedStyles.primary,
+    outline: themedStyles.outline,
+    destructive: themedStyles.destructive,
+    dashed: themedStyles.dashed,
+    ghost: themedStyles.ghost,
+  };
+
+  const variantTextStyleMap = {
+    primary: themedStyles.primaryText,
+    outline: themedStyles.outlineText,
+    destructive: themedStyles.destructiveText,
+    dashed: themedStyles.dashedText,
+    ghost: themedStyles.ghostText,
+  };
 
   return (
     <Pressable
@@ -53,7 +112,7 @@ export default function Button({
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       style={({ pressed }) => [
         styles.base,
-        styles[variant],
+        variantStyleMap[variant],
         sizeStyles[size].container,
         fullWidth && styles.fullWidth,
         pressed && !isDisabled && styles.pressed,
@@ -65,7 +124,7 @@ export default function Button({
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={variant === 'primary' || variant === 'destructive' ? colors.white : colors.primary}
+          color={variant === 'primary' ? colors.buttonPrimaryText : variant === 'destructive' ? colors.white : colors.primary}
         />
       ) : (
         <View style={styles.contentRow}>
@@ -74,7 +133,7 @@ export default function Button({
             style={[
               styles.baseText,
               sizeStyles[size].text,
-              variantTextStyles[variant],
+              variantTextStyleMap[variant],
               textStyle,
             ]}
           >
@@ -119,23 +178,6 @@ const sizeStyles = {
   }),
 };
 
-const variantTextStyles = StyleSheet.create({
-  primary: {
-    color: colors.white,
-  },
-  outline: {
-    color: colors.primary,
-  },
-  destructive: {
-    color: colors.white,
-  },
-  dashed: {
-    color: colors.primary,
-  },
-  ghost: {
-    color: colors.primary,
-  },
-});
 
 const styles = StyleSheet.create({
   base: {
@@ -159,26 +201,6 @@ const styles = StyleSheet.create({
   baseText: {
     fontFamily: fontFamilies.bold,
     fontWeight: Platform.OS === 'android' ? undefined : '700',
-  },
-  primary: {
-    backgroundColor: colors.primary,
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colors.borderSecondary,
-  },
-  destructive: {
-    backgroundColor: colors.red,
-  },
-  dashed: {
-    backgroundColor: colors.surfaceDashed,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: colors.borderDashed,
-  },
-  ghost: {
-    backgroundColor: 'transparent',
   },
   pressed: {
     opacity: 0.85,

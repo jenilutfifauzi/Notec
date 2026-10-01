@@ -1,8 +1,21 @@
 import React, { memo } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
-import { formatRupiah, formatDate } from '@/lib/format';
-import { colors, radii, spacing, typography } from '@/lib/tokens';
-import AppText from '@/components/atoms/AppText';
+import { formatRupiah, formatDateShort, getTodayDateString } from '@/lib/format';
+import { useTheme } from '@/lib/theme';
+import { fontFamilies } from '@/lib/tokens';
+import {
+  Icon,
+  Coffee02Icon,
+  ShoppingBag01Icon,
+  Car01Icon,
+  Invoice01Icon,
+  Coins01Icon,
+  GiftIcon,
+  Medicine02Icon,
+  Film01Icon,
+  Note01Icon,
+} from '@/lib/icons';
+import type { IconSvgElement } from '@hugeicons/react-native';
 
 export interface TransactionItemProps {
   id: number;
@@ -16,6 +29,21 @@ export interface TransactionItemProps {
   onLongPress?: (id: number) => void;
 }
 
+function getCategoryIcon(name: string): IconSvgElement {
+  const lower = (name || '').toLowerCase();
+  if (lower.includes('makan') || lower.includes('minum') || lower.includes('kopi') || lower.includes('kafe')) {
+    return Coffee02Icon;
+  }
+  if (lower.includes('belanja')) return ShoppingBag01Icon;
+  if (lower.includes('transport') || lower.includes('bensin') || lower.includes('kendaraan')) return Car01Icon;
+  if (lower.includes('tagihan') || lower.includes('listrik') || lower.includes('air') || lower.includes('pulsa')) return Invoice01Icon;
+  if (lower.includes('gaji') || lower.includes('upah') || lower.includes('investasi')) return Coins01Icon;
+  if (lower.includes('hadiah') || lower.includes('bonus')) return GiftIcon;
+  if (lower.includes('kesehatan') || lower.includes('obat') || lower.includes('dokter')) return Medicine02Icon;
+  if (lower.includes('hiburan') || lower.includes('nonton') || lower.includes('game')) return Film01Icon;
+  return Note01Icon;
+}
+
 const TransactionItem = memo(function TransactionItem({
   id,
   note,
@@ -27,10 +55,14 @@ const TransactionItem = memo(function TransactionItem({
   onPress,
   onLongPress,
 }: TransactionItemProps) {
+  const { mode, colors } = useTheme();
   const isExpense = type === 'expense';
   const title = note ? note : categoryName;
-  const subtitle = `${categoryName} · ${formatDate(transactionDate)}`;
+  const isToday = transactionDate === getTodayDateString();
+  const dateDisplay = isToday ? 'Hari ini' : formatDateShort(transactionDate);
+  const subtitle = `${categoryName} · ${dateDisplay}`;
   const formattedAmount = `${isExpense ? '−' : '+'}${formatRupiah(amountIdr)}`;
+  const iconDef = getCategoryIcon(categoryName);
 
   const handlePress = () => {
     if (onPress) onPress(id);
@@ -48,35 +80,40 @@ const TransactionItem = memo(function TransactionItem({
       accessibilityRole="button"
       accessibilityLabel={`${title}, ${formattedAmount}, ${subtitle}`}
     >
+      {/* Category Icon / Emoji */}
       {/* Category Icon */}
       <View
         style={[
           styles.iconContainer,
-          { backgroundColor: categoryColor || colors.primary },
+          {
+            backgroundColor: categoryColor
+              ? `${categoryColor}22`
+              : mode === 'dark'
+              ? '#2a2a2a'
+              : colors.surfaceControl,
+          },
         ]}
       >
-        <Text style={styles.iconText}>{isExpense ? '↗' : '↙'}</Text>
+        <Icon
+          icon={iconDef}
+          size={18}
+          color={categoryColor || (mode === 'dark' ? colors.white : colors.ink)}
+          strokeWidth={1.8}
+        />
       </View>
 
       {/* Title & Subtitle */}
       <View style={styles.textContainer}>
-        <Text style={styles.title} numberOfLines={1}>
+        <Text style={[styles.title, { color: colors.ink }]} numberOfLines={1}>
           {title}
         </Text>
-        <Text style={styles.subtitle} numberOfLines={1}>
+        <Text style={[styles.subtitle, { color: colors.muted }]} numberOfLines={1}>
           {subtitle}
         </Text>
       </View>
 
       {/* Amount */}
-      <AppText
-        variant="bodyBold"
-        tabularNums
-        color={isExpense ? colors.red : colors.green}
-        style={styles.amount}
-      >
-        {formattedAmount}
-      </AppText>
+      <Text style={[styles.amount, { color: colors.ink }]}>{formattedAmount}</Text>
     </Pressable>
   );
 });
@@ -87,40 +124,40 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing['6'],
-    borderBottomWidth: 1,
-    borderBottomColor: colors.line,
+    gap: 12,
+    paddingVertical: 8,
+    width: '100%',
   },
   iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: radii.md,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '700',
+  emojiText: {
+    fontSize: 18,
+    lineHeight: 22,
   },
   textContainer: {
     flex: 1,
-    marginLeft: spacing['6'],
-    marginRight: spacing['4'],
+    gap: 3,
   },
   title: {
-    ...typography.bodyBold,
-    color: colors.ink,
-    letterSpacing: -0.2,
+    fontFamily: fontFamilies.semiBold,
+    fontSize: 14,
+    lineHeight: 18,
   },
   subtitle: {
-    ...typography.caption,
-    fontSize: 11,
-    color: colors.muted,
-    marginTop: 2,
+    fontFamily: fontFamilies.regular,
+    fontSize: 12,
+    lineHeight: 15,
   },
   amount: {
-    letterSpacing: -0.3,
+    fontFamily: fontFamilies.bold,
+    fontSize: 14,
+    lineHeight: 18,
+    fontVariant: ['tabular-nums'],
   },
 });

@@ -1,8 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle, StyleProp, Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, radii, fontFamilies } from '@/lib/tokens';
-
+import { Icon, Tick01Icon } from '@/lib/icons';
+import { radii, fontFamilies } from '@/lib/tokens';
 export type CategoryDotSize = 'sm' | 'md' | 'lg';
 
 export interface CategoryDotProps {
@@ -37,7 +36,7 @@ export default function CategoryDot({
       ]}
     >
       {selected ? (
-        <Ionicons name="checkmark" size={dimension.iconSize} color={colors.white} />
+        <Icon icon={Tick01Icon} size={dimension.iconSize} color="#ffffff" />
       ) : size !== 'sm' && firstLetter ? (
         <Text style={[styles.letter, { fontSize: dimension.fontSize }]}>
           {firstLetter}
@@ -75,7 +74,7 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
   },
   letter: {
-    color: colors.white,
+    color: '#ffffff',
     fontFamily: fontFamilies.bold,
     fontWeight: Platform.OS === 'android' ? undefined : '700',
   },

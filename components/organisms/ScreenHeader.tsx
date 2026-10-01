@@ -8,8 +8,10 @@ import {
   StyleProp,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, typography } from '@/lib/tokens';
+import { Icon, ArrowLeft01Icon } from '@/lib/icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '@/lib/theme';
+import { spacing, typography } from '@/lib/tokens';
 
 export type ScreenHeaderVariant = 'primary' | 'transparent';
 
@@ -28,18 +30,13 @@ export default function ScreenHeader({
   variant = 'primary',
   style,
 }: ScreenHeaderProps) {
+  const { colors } = useTheme();
   const isPrimary = variant === 'primary';
-  const textColor = isPrimary ? colors.white : colors.ink;
-  const iconColor = isPrimary ? colors.white : colors.ink;
+  const textColor = isPrimary ? '#063b1b' : colors.ink;
+  const iconColor = isPrimary ? '#063b1b' : colors.ink;
 
-  return (
-    <SafeAreaView
-      edges={['top']}
-      style={[
-        isPrimary ? styles.primarySafe : styles.transparentSafe,
-        style,
-      ]}
-    >
+  const content = (
+    <SafeAreaView edges={['top']}>
       <View style={styles.headerContent}>
         {onBack ? (
           <Pressable
@@ -49,7 +46,7 @@ export default function ScreenHeader({
             accessibilityLabel="Kembali"
             style={styles.actionBtn}
           >
-            <Ionicons name="arrow-back" size={22} color={iconColor} />
+            <Icon icon={ArrowLeft01Icon} size={22} color={iconColor} />
           </Pressable>
         ) : (
           <View style={styles.actionBtnPlaceholder} />
@@ -70,12 +67,23 @@ export default function ScreenHeader({
       </View>
     </SafeAreaView>
   );
+
+  if (isPrimary) {
+    return (
+      <LinearGradient colors={['#c7f23a', '#78b52c']} style={style}>
+        {content}
+      </LinearGradient>
+    );
+  }
+
+  return (
+    <View style={[styles.transparentSafe, style]}>
+      {content}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-  primarySafe: {
-    backgroundColor: colors.primary,
-  },
   transparentSafe: {
     backgroundColor: 'transparent',
   },
