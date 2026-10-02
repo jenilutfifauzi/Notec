@@ -36,7 +36,14 @@
       ],
       "expo-sqlite",
       "expo-sharing",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Izinkan $(PRODUCT_NAME) menggunakan mikrofon untuk mengisi transaksi dengan suara.",
+          "speechRecognitionPermission": "Izinkan $(PRODUCT_NAME) mengenali ucapan untuk mengisi transaksi."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

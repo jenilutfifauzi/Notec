@@ -39,4 +39,5 @@ export {
   Medicine02Icon,
   Film01Icon,
   Note01Icon,
+  Mic01Icon,
 } from '@hugeicons/core-free-icons';

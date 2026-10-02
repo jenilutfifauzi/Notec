@@ -48,3 +48,10 @@ temp_router/
 
 expo-env.d.ts
 # @end expo-cli
+
+.codex/
+.cursor/
+.gemini/
+.opencode/
+docs/logo/
+docs/screenshot/

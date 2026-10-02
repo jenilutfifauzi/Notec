@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,9 +9,17 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  Keyboard,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { Icon, Calendar01Icon } from '@/lib/icons';
+import {
+  getSpeechRecognitionModule,
+  useSpeechRecognitionEvent,
+  type ExpoSpeechRecognitionErrorCode,
+  type ExpoSpeechRecognitionResultEvent,
+  type ExpoSpeechRecognitionErrorEvent,
+} from '../lib/speechRecognition';
+import { Icon, Calendar01Icon, Mic01Icon } from '@/lib/icons';
 import DateTimePicker, { DateTimePickerChangeEvent } from '@react-native-community/datetimepicker';
 import { Category } from '../db/schema';
 import {
@@ -19,6 +27,7 @@ import {
   updateTransaction,
   getTransactionById,
 } from '../db/queries/transactions';
+import { getActiveCategories } from '../db/queries/categories';
 import CategoryPickerModal from '@/components/organisms/CategoryPickerModal';
 import { MAX_AMOUNT, MAX_NOTE_LENGTH } from '../lib/constants';
 import {
@@ -26,6 +35,7 @@ import {
   formatDate,
   getTodayDateString,
 } from '../lib/format';
+import { parseVoiceTransaction } from '../lib/voiceTransactionParser';
 import { useTheme } from '@/lib/theme';
 import {
   radii,
@@ -39,6 +49,32 @@ import {
   Button,
   CategoryDot,
 } from '@/components/ui';
+
+function mapSpeechError(
+  error: ExpoSpeechRecognitionErrorCode,
+  rawMessage?: string
+): string {
+  switch (error) {
+    case 'not-allowed':
+    case 'service-not-allowed':
+      return 'Izin mikrofon atau pengenalan ucapan belum diberikan.';
+    case 'audio-capture':
+      return 'Mikrofon tidak dapat diakses atau sedang digunakan aplikasi lain.';
+    case 'language-not-supported':
+      return 'Bahasa Indonesia (id-ID) tidak didukung oleh layanan ucapan pada perangkat ini.';
+    case 'network':
+      return 'Gagal terhubung ke layanan pengenalan ucapan. Periksa koneksi internet.';
+    case 'no-speech':
+      return 'Tidak ada suara yang terdeteksi. Silakan coba lagi.';
+    case 'speech-timeout':
+      return 'Waktu bicara habis tanpa input suara. Silakan coba lagi.';
+    case 'busy':
+      return 'Layanan pengenalan ucapan sedang sibuk. Silakan coba sesaat lagi.';
+    default:
+      return rawMessage || 'Terjadi kesalahan saat mengenali suara.';
+  }
+}
+
 export default function RecordScreen() {
   const { colors } = useTheme();
   const params = useLocalSearchParams<{ id?: string }>();
@@ -58,6 +94,170 @@ export default function RecordScreen() {
   const [pickerModalVisible, setPickerModalVisible] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
 
+  // Voice input state & refs
+  const [isListening, setIsListening] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [voiceSuccess, setVoiceSuccess] = useState<string | null>(null);
+
+  const finalTranscriptRef = useRef<string>('');
+  const currentTranscriptRef = useRef<string>('');
+  const sessionFailedRef = useRef<boolean>(false);
+  const activeCategoriesRef = useRef<Category[]>([]);
+  const dateStrRef = useRef<string>(dateStr);
+  dateStrRef.current = dateStr;
+
+  // Abort speech recognition on unmount if active
+  useEffect(() => {
+    return () => {
+      try {
+        const mod = getSpeechRecognitionModule();
+        mod?.abort();
+      } catch {
+        // no-op if module not active
+      }
+    };
+  }, []);
+
+  useSpeechRecognitionEvent('start', () => {
+    setIsListening(true);
+  });
+
+  useSpeechRecognitionEvent('result', (event: ExpoSpeechRecognitionResultEvent) => {
+    const currentText = event.results.map((r) => r.transcript).join(' ').trim();
+    if (event.isFinal) {
+      if (currentText) {
+        if (finalTranscriptRef.current) {
+          finalTranscriptRef.current += ' ' + currentText;
+        } else {
+          finalTranscriptRef.current = currentText;
+        }
+      }
+      currentTranscriptRef.current = finalTranscriptRef.current;
+      setVoiceTranscript(finalTranscriptRef.current);
+    } else {
+      const interimDisplay = finalTranscriptRef.current
+        ? `${finalTranscriptRef.current} ${currentText}`.trim()
+        : currentText;
+      currentTranscriptRef.current = interimDisplay;
+      setVoiceTranscript(interimDisplay);
+    }
+  });
+
+  useSpeechRecognitionEvent('error', (event: ExpoSpeechRecognitionErrorEvent) => {
+    sessionFailedRef.current = true;
+    setIsListening(false);
+    const mapped = mapSpeechError(event.error, event.message);
+    setVoiceError(mapped);
+    setVoiceSuccess(null);
+  });
+
+  useSpeechRecognitionEvent('end', () => {
+    setIsListening(false);
+    if (sessionFailedRef.current) {
+      return;
+    }
+
+    const rawFinal =
+      finalTranscriptRef.current.trim() || currentTranscriptRef.current.trim();
+    if (!rawFinal) {
+      setVoiceError('Tidak ada ucapan yang terdeteksi.');
+      setVoiceSuccess(null);
+      return;
+    }
+
+    const parseResult = parseVoiceTransaction(
+      rawFinal,
+      activeCategoriesRef.current,
+      dateStrRef.current
+    );
+
+    if (!parseResult.ok) {
+      setVoiceError(parseResult.error);
+      setVoiceSuccess(null);
+      return;
+    }
+
+    const {
+      type: parsedType,
+      amount,
+      category,
+      note: parsedNote,
+      dateStr: parsedDateStr,
+    } = parseResult.value;
+
+    setType(parsedType);
+    setRawAmount(amount);
+    setAmountStr(rupiahFormatter.format(amount));
+    setSelectedCategory(category);
+    setNote(parsedNote);
+    setDateStr(parsedDateStr);
+    const [y, m, d] = parsedDateStr.split('-').map(Number);
+    setDateObj(new Date(y, m - 1, d));
+
+    setVoiceTranscript(rawFinal);
+    setVoiceError(null);
+    setErrorText(null);
+    setVoiceSuccess('Hasil suara dimasukkan. Periksa sebelum menyimpan.');
+  });
+
+  const handleVoiceToggle = useCallback(async () => {
+    const mod = getSpeechRecognitionModule();
+
+    if (isListening) {
+      try {
+        await mod?.stop();
+      } catch (err) {
+        console.error('Failed to stop speech recognition:', err);
+      }
+      return;
+    }
+
+    Keyboard.dismiss();
+    setVoiceTranscript('');
+    setVoiceError(null);
+    setVoiceSuccess(null);
+    finalTranscriptRef.current = '';
+    currentTranscriptRef.current = '';
+    sessionFailedRef.current = false;
+
+    if (!mod) {
+      if (Platform.OS === 'web') {
+        setVoiceError(
+          'Browser ini tidak mendukung Web Speech Recognition. Gunakan browser seperti Google Chrome.'
+        );
+      } else {
+        setVoiceError(
+          'Fitur pengenalan suara memerlukan development build native (tidak didukung di Expo Go). Jalankan npx expo run:android atau npx expo run:ios.'
+        );
+      }
+      return;
+    }
+
+    try {
+      const cats = await getActiveCategories();
+      activeCategoriesRef.current = cats;
+
+      const perm = await mod.requestPermissionsAsync();
+      if (!perm.granted) {
+        setVoiceError('Izin mikrofon atau pengenalan ucapan belum diberikan.');
+        return;
+      }
+
+      mod.start({
+        lang: 'id-ID',
+        interimResults: true,
+        continuous: false,
+        maxAlternatives: 1,
+      });
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Gagal memulai pengenalan suara. Silakan coba lagi.';
+      setVoiceError(msg);
+    }
+  }, [isListening]);
   // Load transaction if in edit mode
   useEffect(() => {
     if (!editId) return;
@@ -225,6 +425,82 @@ export default function RecordScreen() {
           style={styles.segmented}
         />
 
+        {/* Voice Input Control */}
+        <View style={styles.voiceSection}>
+          <Button
+            title={isListening ? 'Berhenti mendengarkan' : 'Isi dengan suara'}
+            onPress={handleVoiceToggle}
+            variant={isListening ? 'destructive' : 'outline'}
+            size="md"
+            icon={
+              <Icon
+                icon={Mic01Icon}
+                size={18}
+                color={isListening ? colors.white : colors.ink}
+              />
+            }
+            accessibilityLabel={
+              isListening
+                ? 'Berhenti mendengarkan suara'
+                : 'Isi formulir transaksi dengan suara'
+            }
+            fullWidth
+            style={styles.voiceBtn}
+          />
+
+          {isListening || Boolean(voiceTranscript) || Boolean(voiceError) || Boolean(voiceSuccess) ? (
+            <View
+              style={[
+                styles.voiceStatusCard,
+                {
+                  backgroundColor: voiceError
+                    ? colors.errorBg
+                    : isListening
+                    ? colors.surfaceInput
+                    : colors.surfaceDashed,
+                  borderColor: voiceError
+                    ? colors.errorBorder
+                    : isListening
+                    ? colors.primary
+                    : colors.borderSecondary,
+                },
+              ]}
+            >
+              {isListening ? (
+                <View style={styles.voiceListeningRow}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text style={[styles.voiceStatusTitle, { color: colors.primary }]}>
+                    Mendengarkan ucapan...
+                  </Text>
+                </View>
+              ) : null}
+
+              {voiceTranscript ? (
+                <Text
+                  style={[
+                    styles.voiceTranscriptText,
+                    { color: isListening ? colors.muted : colors.ink },
+                  ]}
+                  numberOfLines={3}
+                >
+                  "{voiceTranscript}"
+                </Text>
+              ) : null}
+
+              {voiceSuccess ? (
+                <Text style={[styles.voiceSuccessText, { color: colors.primary }]}>
+                  {voiceSuccess}
+                </Text>
+              ) : null}
+
+              {voiceError ? (
+                <Text style={[styles.voiceErrorText, { color: colors.red }]}>
+                  {voiceError}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+        </View>
         {/* Nominal Field */}
         <View style={styles.field}>
           <Text style={[styles.label, { color: colors.ink }]}>Nominal</Text>
@@ -415,5 +691,36 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     marginTop: spacing['4'],
+  },
+  voiceSection: {
+    marginBottom: spacing['6'],
+  },
+  voiceBtn: {
+    marginBottom: spacing['3'],
+  },
+  voiceStatusCard: {
+    borderWidth: 1,
+    borderRadius: radii.md,
+    borderCurve: 'continuous',
+    padding: spacing['4'],
+    gap: spacing['2'],
+  },
+  voiceListeningRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing['2'],
+  },
+  voiceStatusTitle: {
+    ...typography.captionBold,
+  },
+  voiceTranscriptText: {
+    ...typography.body,
+    fontStyle: 'italic',
+  },
+  voiceSuccessText: {
+    ...typography.captionBold,
+  },
+  voiceErrorText: {
+    ...typography.caption,
   },
 });
