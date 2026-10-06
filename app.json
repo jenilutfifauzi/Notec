@@ -1,24 +1,23 @@
 {
   "expo": {
-    "name": "notec",
+    "name": "Notec",
     "slug": "notec",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "notec",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#799685"
-    },
     "android": {
       "package": "com.notec.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#171717",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-foreground.png"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "output": "single",
@@ -43,10 +42,37 @@
           "microphonePermission": "Izinkan $(PRODUCT_NAME) menggunakan mikrofon untuk mengisi transaksi dengan suara.",
           "speechRecognitionPermission": "Izinkan $(PRODUCT_NAME) mengenali ucapan untuk mengisi transaksi."
         }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#799685"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "headers": {
+          "Cross-Origin-Embedder-Policy": "credentialless",
+          "Cross-Origin-Opener-Policy": "same-origin"
+        }
+      },
+      "eas": {
+        "projectId": "4f134c84-f424-4683-9bf7-154d0a458059"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.notec.app",
+      "infoPlist": {
+        "NSSpeechRecognitionUsageDescription": "Izinkan $(PRODUCT_NAME) mengenali ucapan untuk mengisi transaksi.",
+        "NSMicrophoneUsageDescription": "Izinkan $(PRODUCT_NAME) menggunakan mikrofon untuk mengisi transaksi dengan suara.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     }
   }
 }
