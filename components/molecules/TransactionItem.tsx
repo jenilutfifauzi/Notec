@@ -13,14 +13,18 @@ import { motionTokens } from '@/lib/motion';
 import {
   Icon,
   Coffee02Icon,
+  Restaurant01Icon,
   ShoppingBag01Icon,
   Car01Icon,
-  Invoice01Icon,
-  Coins01Icon,
+  ReceiptTextIcon,
+  BanknoteIcon,
+  PiggyBankIcon,
   GiftIcon,
   Medicine02Icon,
+  Book01Icon,
   Film01Icon,
-  Note01Icon,
+  Wallet01Icon,
+  Tag01Icon,
 } from '@/lib/icons';
 import type { IconSvgElement } from '@hugeicons/react-native';
 
@@ -38,19 +42,141 @@ export interface TransactionItemProps {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-function getCategoryIcon(name: string): IconSvgElement {
+function getCategoryIcon(name: string, type: 'income' | 'expense'): IconSvgElement {
   const lower = (name || '').toLowerCase();
-  if (lower.includes('makan') || lower.includes('minum') || lower.includes('kopi') || lower.includes('kafe')) {
+  if (
+    lower.includes('kopi') ||
+    lower.includes('kafe') ||
+    lower.includes('cafe') ||
+    lower.includes('coffee')
+  ) {
     return Coffee02Icon;
   }
-  if (lower.includes('belanja')) return ShoppingBag01Icon;
-  if (lower.includes('transport') || lower.includes('bensin') || lower.includes('kendaraan')) return Car01Icon;
-  if (lower.includes('tagihan') || lower.includes('listrik') || lower.includes('air') || lower.includes('pulsa')) return Invoice01Icon;
-  if (lower.includes('gaji') || lower.includes('upah') || lower.includes('investasi')) return Coins01Icon;
-  if (lower.includes('hadiah') || lower.includes('bonus')) return GiftIcon;
-  if (lower.includes('kesehatan') || lower.includes('obat') || lower.includes('dokter')) return Medicine02Icon;
-  if (lower.includes('hiburan') || lower.includes('nonton') || lower.includes('game')) return Film01Icon;
-  return Note01Icon;
+  if (
+    lower.includes('makan') ||
+    lower.includes('minum') ||
+    lower.includes('resto') ||
+    lower.includes('kuliner') ||
+    lower.includes('food') ||
+    lower.includes('warung') ||
+    lower.includes('snack') ||
+    lower.includes('sarapan') ||
+    lower.includes('siang') ||
+    lower.includes('malam')
+  ) {
+    return Restaurant01Icon;
+  }
+  if (
+    lower.includes('belanja') ||
+    lower.includes('shop') ||
+    lower.includes('mall') ||
+    lower.includes('pasar') ||
+    lower.includes('supermarket') ||
+    lower.includes('beli') ||
+    lower.includes('store')
+  ) {
+    return ShoppingBag01Icon;
+  }
+  if (
+    lower.includes('transport') ||
+    lower.includes('bensin') ||
+    lower.includes('kendaraan') ||
+    lower.includes('ojek') ||
+    lower.includes('grab') ||
+    lower.includes('gojek') ||
+    lower.includes('bbm') ||
+    lower.includes('parkir') ||
+    lower.includes('tol') ||
+    lower.includes('mobil') ||
+    lower.includes('motor')
+  ) {
+    return Car01Icon;
+  }
+  if (
+    lower.includes('tagihan') ||
+    lower.includes('listrik') ||
+    lower.includes('air') ||
+    lower.includes('pdam') ||
+    lower.includes('pulsa') ||
+    lower.includes('internet') ||
+    lower.includes('wifi') ||
+    lower.includes('pajak') ||
+    lower.includes('sewa') ||
+    lower.includes('bpjs') ||
+    lower.includes('cicilan')
+  ) {
+    return ReceiptTextIcon;
+  }
+  if (
+    lower.includes('gaji') ||
+    lower.includes('upah') ||
+    lower.includes('salary') ||
+    lower.includes('income') ||
+    lower.includes('honor') ||
+    lower.includes('thr') ||
+    lower.includes('payroll') ||
+    lower.includes('proyek')
+  ) {
+    return BanknoteIcon;
+  }
+  if (
+    lower.includes('investasi') ||
+    lower.includes('saham') ||
+    lower.includes('crypto') ||
+    lower.includes('bunga') ||
+    lower.includes('dividen') ||
+    lower.includes('tabungan') ||
+    lower.includes('nabung')
+  ) {
+    return PiggyBankIcon;
+  }
+  if (
+    lower.includes('hadiah') ||
+    lower.includes('bonus') ||
+    lower.includes('kado') ||
+    lower.includes('gift') ||
+    lower.includes('donasi') ||
+    lower.includes('sedekah') ||
+    lower.includes('zakat') ||
+    lower.includes('infaq')
+  ) {
+    return GiftIcon;
+  }
+  if (
+    lower.includes('kesehatan') ||
+    lower.includes('obat') ||
+    lower.includes('dokter') ||
+    lower.includes('rumah sakit') ||
+    lower.includes('klinik') ||
+    lower.includes('apotek') ||
+    lower.includes('medis')
+  ) {
+    return Medicine02Icon;
+  }
+  if (
+    lower.includes('pendidikan') ||
+    lower.includes('sekolah') ||
+    lower.includes('kuliah') ||
+    lower.includes('kursus') ||
+    lower.includes('buku') ||
+    lower.includes('les') ||
+    lower.includes('edukasi')
+  ) {
+    return Book01Icon;
+  }
+  if (
+    lower.includes('hiburan') ||
+    lower.includes('nonton') ||
+    lower.includes('film') ||
+    lower.includes('bioskop') ||
+    lower.includes('game') ||
+    lower.includes('liburan') ||
+    lower.includes('wisata') ||
+    lower.includes('hobi')
+  ) {
+    return Film01Icon;
+  }
+  return type === 'income' ? Wallet01Icon : Tag01Icon;
 }
 
 const TransactionItem = memo(function TransactionItem({
@@ -71,7 +197,7 @@ const TransactionItem = memo(function TransactionItem({
   const dateDisplay = isToday ? 'Hari ini' : formatDateShort(transactionDate);
   const subtitle = `${categoryName} • ${dateDisplay}`;
   const formattedAmount = `${isExpense ? '−' : '+'}${formatRupiah(amountIdr)}`;
-  const iconDef = getCategoryIcon(categoryName);
+  const iconDef = getCategoryIcon(categoryName, type);
 
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
@@ -135,9 +261,9 @@ const TransactionItem = memo(function TransactionItem({
       >
         <Icon
           icon={iconDef}
-          size={16}
+          size={18}
           color={categoryColor || (mode === 'dark' ? colors.primary : colors.ink)}
-          strokeWidth={1.8}
+          strokeWidth={1.5}
         />
       </View>
 
@@ -168,8 +294,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   iconContainer: {
-    width: 34,
-    height: 34,
+    width: 36,
+    height: 36,
     borderRadius: 10,
     borderCurve: 'continuous',
     alignItems: 'center',

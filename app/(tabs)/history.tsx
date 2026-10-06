@@ -9,7 +9,7 @@ import {
 import { useLocalSearchParams, router } from 'expo-router';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { LegendList } from '@legendapp/list/react-native';
-import { Icon, ArrowDown01Icon, ArrowUp01Icon, ChevronDownIcon } from '@/lib/icons';
+import { Icon, ArrowDown02Icon, ArrowUp02Icon, ChevronDownIcon, ReceiptTextIcon } from '@/lib/icons';
 import { db } from '../../db/client';
 import { transactions, Category } from '../../db/schema';
 import {
@@ -449,7 +449,13 @@ export default function HistoryScreen() {
         <View style={styles.summaryTotals}>
           {summaryTotals.expense > 0 && selectedType !== 'income' ? (
             <View style={styles.summaryBadgeExpense}>
-              <Icon icon={ArrowDown01Icon} size={13} color={colors.red} />
+              <Icon
+                icon={ArrowDown02Icon}
+                size={13}
+                strokeWidth={2}
+                color={colors.red}
+                style={{ marginRight: 2 }}
+              />
               <Text style={[styles.summaryExpenseText, { color: colors.red }]}>
                 {formatRupiah(summaryTotals.expense)}
               </Text>
@@ -457,7 +463,13 @@ export default function HistoryScreen() {
           ) : null}
           {summaryTotals.income > 0 && selectedType !== 'expense' ? (
             <View style={styles.summaryBadgeIncome}>
-              <Icon icon={ArrowUp01Icon} size={13} color={colors.green} />
+              <Icon
+                icon={ArrowUp02Icon}
+                size={13}
+                strokeWidth={2}
+                color={colors.green}
+                style={{ marginRight: 2 }}
+              />
               <Text style={[styles.summaryIncomeText, { color: colors.green }]}>
                 {formatRupiah(summaryTotals.income)}
               </Text>
@@ -474,6 +486,14 @@ export default function HistoryScreen() {
           </View>
         ) : listData.length === 0 ? (
           <EmptyState
+            icon={
+              <Icon
+                icon={ReceiptTextIcon}
+                size={36}
+                color={colors.iconMuted}
+                strokeWidth={1.4}
+              />
+            }
             message="Tidak ada transaksi ditemukan."
             action={
               hasActiveFilters

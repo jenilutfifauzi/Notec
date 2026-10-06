@@ -11,7 +11,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   Calendar01Icon,
-  ArrowRight01Icon,
+  ArrowRight02Icon,
 } from '@/lib/icons';
 import DateTimePicker, { DateTimePickerChangeEvent } from '@react-native-community/datetimepicker';
 import { formatDateShort } from '@/lib/format';
@@ -447,7 +447,7 @@ export default function DateFilterModal({
               </Pressable>
 
               <View style={styles.dateDivider}>
-                <Icon icon={ArrowRight01Icon} size={16} color={colors.muted} />
+                <Icon icon={ArrowRight02Icon} size={15} strokeWidth={1.6} color={colors.muted} />
               </View>
 
               {/* To Date Box */}

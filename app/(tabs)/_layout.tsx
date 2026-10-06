@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
   ReduceMotion,
 } from 'react-native-reanimated';
-import { Icon, Home01Icon, Add01Icon, Clock01Icon } from '@/lib/icons';
+import { Icon, Home01Icon, Add01Icon, TransactionHistoryIcon } from '@/lib/icons';
 import { useTheme } from '@/lib/theme';
 import { fontFamilies } from '@/lib/tokens';
 import { motionTokens, springBounce } from '@/lib/motion';
@@ -112,7 +112,7 @@ export default function TabLayout() {
         options={{
           title: 'Riwayat',
           tabBarIcon: ({ color }) => (
-            <Icon icon={Clock01Icon} size={19} color={color} />
+            <Icon icon={TransactionHistoryIcon} size={20} strokeWidth={1.5} color={color} />
           ),
         }}
       />
