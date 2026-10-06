@@ -8,10 +8,17 @@ import {
   TextStyle,
   StyleProp,
   View,
-  Platform,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  ReduceMotion,
+} from 'react-native-reanimated';
 import { useTheme } from '@/lib/theme';
 import { radii, fontFamilies } from '@/lib/tokens';
+import { motionTokens } from '@/lib/motion';
+
 export type ButtonVariant = 'primary' | 'outline' | 'destructive' | 'dashed' | 'ghost';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
@@ -29,6 +36,8 @@ export interface ButtonProps {
   textStyle?: StyleProp<TextStyle>;
 }
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 export default function Button({
   title,
   onPress,
@@ -44,6 +53,43 @@ export default function Button({
 }: ButtonProps) {
   const { colors, shadows } = useTheme();
   const isDisabled = disabled || loading;
+
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+
+  const handlePressIn = () => {
+    if (isDisabled) return;
+    scale.value = withTiming(motionTokens.scale.press, {
+      duration: motionTokens.presets.press.pressInDuration,
+      easing: motionTokens.easing.smoothOut,
+      reduceMotion: ReduceMotion.System,
+    });
+    opacity.value = withTiming(0.92, {
+      duration: motionTokens.presets.press.pressInDuration,
+      easing: motionTokens.easing.smoothOut,
+      reduceMotion: ReduceMotion.System,
+    });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withTiming(1, {
+      duration: motionTokens.presets.press.pressOutDuration,
+      easing: motionTokens.easing.smoothOut,
+      reduceMotion: ReduceMotion.System,
+    });
+    opacity.value = withTiming(1, {
+      duration: motionTokens.presets.press.pressOutDuration,
+      easing: motionTokens.easing.smoothOut,
+      reduceMotion: ReduceMotion.System,
+    });
+  };
+
+  const animatedPressStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+      opacity: opacity.value,
+    };
+  });
 
   const themedStyles = useMemo(
     () =>
@@ -104,27 +150,35 @@ export default function Button({
   };
 
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       disabled={isDisabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel || title}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
-      style={({ pressed }) => [
+      style={[
         styles.base,
         variantStyleMap[variant],
         sizeStyles[size].container,
         fullWidth && styles.fullWidth,
-        pressed && !isDisabled && styles.pressed,
         isDisabled && styles.disabled,
         variant === 'primary' && !isDisabled && shadows.button,
+        animatedPressStyle,
         style,
       ]}
     >
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={variant === 'primary' ? colors.buttonPrimaryText : variant === 'destructive' ? colors.white : colors.primary}
+          color={
+            variant === 'primary'
+              ? colors.buttonPrimaryText
+              : variant === 'destructive'
+              ? colors.white
+              : colors.primary
+          }
         />
       ) : (
         <View style={styles.contentRow}>
@@ -141,71 +195,74 @@ export default function Button({
           </Text>
         </View>
       )}
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
 const sizeStyles = {
   sm: StyleSheet.create({
     container: {
-      paddingVertical: 8,
+      paddingVertical: 7,
       paddingHorizontal: 12,
       borderRadius: radii.md,
+      gap: 6,
     },
     text: {
       fontSize: 12,
+      lineHeight: 16,
     },
   }),
   md: StyleSheet.create({
     container: {
       paddingVertical: 12,
       paddingHorizontal: 16,
-      borderRadius: radii.lg,
+      borderRadius: radii.xl,
+      gap: 8,
     },
     text: {
       fontSize: 13,
+      lineHeight: 18,
     },
   }),
   lg: StyleSheet.create({
     container: {
-      paddingVertical: 16,
+      paddingVertical: 14,
       paddingHorizontal: 20,
-      borderRadius: radii.lg,
+      borderRadius: radii['2xl'],
+      gap: 8,
     },
     text: {
-      fontSize: 15,
+      fontSize: 14,
+      lineHeight: 20,
     },
   }),
 };
 
-
 const styles = StyleSheet.create({
   base: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     borderCurve: 'continuous',
-  },
-  fullWidth: {
-    width: '100%',
   },
   contentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-  },
-  iconWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   baseText: {
-    fontFamily: fontFamilies.bold,
-    fontWeight: Platform.OS === 'android' ? undefined : '700',
+    fontFamily: fontFamilies.semiBold,
+    textAlign: 'center',
   },
-  pressed: {
-    opacity: 0.85,
+  fullWidth: {
+    width: '100%',
   },
   disabled: {
-    opacity: 0.6,
+    opacity: 0.45,
+  },
+  iconWrap: {
+    marginRight: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

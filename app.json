@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#171717"
+      "backgroundColor": "#799685"
     },
     "android": {
       "package": "com.notec.app",

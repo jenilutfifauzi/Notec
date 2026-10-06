@@ -217,3 +217,5 @@ export const shadows = {
   toast: { boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)', elevation: 4 },
   sheet: { boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.08)', elevation: 6 },
 };
+
+export { motionTokens } from './motion';

@@ -7,6 +7,14 @@ import {
   Pressable,
   ActivityIndicator,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  FadeInDown,
+  ReduceMotion,
+} from 'react-native-reanimated';
+import { motionTokens } from '@/lib/motion';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
@@ -40,6 +48,67 @@ import {
   SectionHeader,
   EmptyState,
 } from '@/components/ui';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+function ThemeToggleButton({
+  mode,
+  toggleTheme,
+  onLongPress,
+}: {
+  mode: string;
+  toggleTheme: () => void;
+  onLongPress: () => void;
+}) {
+  const scale = useSharedValue(1);
+  const rotation = useSharedValue(0);
+
+  const handlePress = () => {
+    rotation.value = withTiming(rotation.value + 180, {
+      duration: motionTokens.presets.iconSwap.duration,
+      easing: motionTokens.presets.iconSwap.easing,
+      reduceMotion: ReduceMotion.System,
+    });
+    toggleTheme();
+  };
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: scale.value },
+      { rotate: `${rotation.value}deg` },
+    ],
+  }));
+
+  return (
+    <AnimatedPressable
+      onPress={handlePress}
+      onLongPress={onLongPress}
+      onPressIn={() => {
+        scale.value = withTiming(motionTokens.presets.iconSwap.startScale, {
+          duration: 100,
+          easing: motionTokens.easing.inOut,
+          reduceMotion: ReduceMotion.System,
+        });
+      }}
+      onPressOut={() => {
+        scale.value = withTiming(1, {
+          duration: 200,
+          easing: motionTokens.easing.inOut,
+          reduceMotion: ReduceMotion.System,
+        });
+      }}
+      style={[styles.themeButton, animatedStyle]}
+      accessibilityLabel={mode === 'dark' ? 'Mode Terang' : 'Mode Gelap'}
+      accessibilityRole="button"
+    >
+      <Icon
+        icon={mode === 'dark' ? Sun01Icon : Moon02Icon}
+        size={16}
+        color="#d9f77b"
+      />
+    </AnimatedPressable>
+  );
+}
 export default function BerandaScreen() {
   const { mode, colors, toggleTheme } = useTheme();
   const now = new Date();
@@ -156,28 +225,23 @@ export default function BerandaScreen() {
             {/* Greeting & Actions */}
             {/* Top Bar: Search Pill (Dynamic Island) & Theme Toggle */}
             <View style={styles.heroTop}>
-              <Pressable
+              <AnimatedPressable
                 onPress={() => router.push('/history')}
-                style={styles.searchPill}
+                style={({ pressed }: { pressed: boolean }) => [
+                  styles.searchPill,
+                  pressed && styles.searchPillPressed,
+                ]}
                 accessibilityRole="button"
                 accessibilityLabel="Cari catatan atau kategori"
               >
                 <Icon icon={Search01Icon} size={14} color="#c7f23a" />
                 <Text style={styles.searchPillText}>Cari...</Text>
-              </Pressable>
-              <Pressable
-                onPress={toggleTheme}
+              </AnimatedPressable>
+              <ThemeToggleButton
+                mode={mode}
+                toggleTheme={toggleTheme}
                 onLongPress={() => router.push('/settings')}
-                style={styles.themeButton}
-                accessibilityLabel={mode === 'dark' ? 'Mode Terang' : 'Mode Gelap'}
-                accessibilityRole="button"
-              >
-                <Icon
-                  icon={mode === 'dark' ? Sun01Icon : Moon02Icon}
-                  size={16}
-                  color="#d9f77b"
-                />
-              </Pressable>
+              />
             </View>
 
             {/* Greeting: Dashboard */}
@@ -189,7 +253,13 @@ export default function BerandaScreen() {
             {/* Balance */}
             <View style={styles.balanceSection}>
               <Text style={styles.balanceLabel}>Saldo bulan ini</Text>
-              <Text style={styles.balanceAmount}>{formatRupiah(summary.balance)}</Text>
+              <Animated.Text
+                key={`bal-${summary.balance}`}
+                entering={FadeInDown.duration(motionTokens.presets.digit.duration)}
+                style={styles.balanceAmount}
+              >
+                {formatRupiah(summary.balance)}
+              </Animated.Text>
 
               {/* Month Picker in Hero */}
               <MonthPicker
@@ -209,15 +279,25 @@ export default function BerandaScreen() {
         <View style={styles.metricsRow}>
           <Card variant="metric" style={styles.metricCard}>
             <Text style={[styles.metricLabel, { color: colors.muted }]}>↙ Masuk</Text>
-            <AppText variant="title" color={colors.ink} tabularNums style={styles.metricValue}>
-              {formatRupiah(summary.income)}
-            </AppText>
+            <Animated.View
+              key={`inc-${summary.income}`}
+              entering={FadeInDown.duration(motionTokens.duration.fast)}
+            >
+              <AppText variant="title" color={colors.ink} tabularNums style={styles.metricValue}>
+                {formatRupiah(summary.income)}
+              </AppText>
+            </Animated.View>
           </Card>
           <Card variant="metric" style={styles.metricCard}>
             <Text style={[styles.metricLabel, { color: colors.muted }]}>↗ Keluar</Text>
-            <AppText variant="title" color={colors.ink} tabularNums style={styles.metricValue}>
-              {formatRupiah(summary.expense)}
-            </AppText>
+            <Animated.View
+              key={`exp-${summary.expense}`}
+              entering={FadeInDown.duration(motionTokens.duration.fast)}
+            >
+              <AppText variant="title" color={colors.ink} tabularNums style={styles.metricValue}>
+                {formatRupiah(summary.expense)}
+              </AppText>
+            </Animated.View>
           </Card>
         </View>
         {loading ? (
@@ -267,18 +347,22 @@ export default function BerandaScreen() {
                 </Card>
               ) : (
                 <View style={styles.recentList}>
-                  {recentList.map((tx) => (
-                    <TransactionItem
+                  {recentList.map((tx, index) => (
+                    <Animated.View
                       key={tx.id}
-                      id={tx.id}
-                      note={tx.note}
-                      categoryName={tx.categoryName}
-                      categoryColor={tx.categoryColor}
-                      type={tx.type}
-                      amountIdr={tx.amount_idr}
-                      transactionDate={tx.transaction_date}
-                      onPress={(id) => router.push(`/record?id=${id}`)}
-                    />
+                      entering={FadeInDown.delay(index * motionTokens.duration.stagger).duration(motionTokens.duration.fast)}
+                    >
+                      <TransactionItem
+                        id={tx.id}
+                        note={tx.note}
+                        categoryName={tx.categoryName}
+                        categoryColor={tx.categoryColor}
+                        type={tx.type}
+                        amountIdr={tx.amount_idr}
+                        transactionDate={tx.transaction_date}
+                        onPress={(id) => router.push(`/record?id=${id}`)}
+                      />
+                    </Animated.View>
                   ))}
                 </View>
               )}
@@ -329,6 +413,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     height: 34,
     gap: 6,
+  },
+  searchPillPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.96 }],
   },
   searchPillText: {
     color: '#d9f77b',

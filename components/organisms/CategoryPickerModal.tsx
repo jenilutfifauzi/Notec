@@ -6,13 +6,24 @@ import {
   Pressable,
   ActivityIndicator,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  FadeInRight,
+  FadeInLeft,
+  FadeOutLeft,
+  FadeOutRight,
+  ReduceMotion,
+} from 'react-native-reanimated';
 import { LegendList } from '@legendapp/list/react-native';
 import { Icon, CheckmarkCircle01Icon, ChevronRightIcon, Add01Icon } from '@/lib/icons';
 import { Category } from '@/db/schema';
 import { getActiveCategories, insertCategory } from '@/db/queries/categories';
 import { CATEGORY_PALETTE, MAX_CATEGORY_NAME_LENGTH } from '@/lib/constants';
-import { useTheme } from '@/lib/theme';
+import { useTheme, type ThemeColors } from '@/lib/theme';
 import { radii, spacing, typography } from '@/lib/tokens';
+import { motionTokens } from '@/lib/motion';
 import CategoryDot from '@/components/atoms/CategoryDot';
 import Button from '@/components/atoms/Button';
 import TextInput from '@/components/molecules/TextInput';
@@ -25,6 +36,68 @@ export interface CategoryPickerModalProps {
   onSelect: (category: Category) => void;
   onClose: () => void;
   onManageCategories?: () => void;
+}
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+function CategoryItemRow({
+  item,
+  isSelected,
+  onPress,
+  colors,
+}: {
+  item: Category;
+  isSelected: boolean;
+  onPress: () => void;
+  colors: ThemeColors;
+}) {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      onPressIn={() => {
+        scale.value = withTiming(0.98, {
+          duration: 100,
+          easing: motionTokens.easing.smoothOut,
+          reduceMotion: ReduceMotion.System,
+        });
+      }}
+      onPressOut={() => {
+        scale.value = withTiming(1, {
+          duration: 200,
+          easing: motionTokens.easing.smoothOut,
+          reduceMotion: ReduceMotion.System,
+        });
+      }}
+      style={[
+        styles.categoryRow,
+        { borderBottomColor: colors.line },
+        isSelected ? [styles.selectedRow, { backgroundColor: colors.surfaceInput }] : null,
+        animatedStyle,
+      ]}
+      accessibilityRole="button"
+    >
+      <CategoryDot color={item.color || colors.primary} label={item.name} size="md" />
+      <Text
+        style={[
+          styles.categoryName,
+          { color: isSelected ? colors.primary : colors.ink },
+        ]}
+      >
+        {item.name}
+      </Text>
+      {isSelected ? (
+        <Icon icon={CheckmarkCircle01Icon} size={20} color={colors.primary} style={styles.chevron} />
+      ) : (
+        <Icon icon={ChevronRightIcon} size={18} color={colors.chevron} style={styles.chevron} />
+      )}
+    </AnimatedPressable>
+  );
 }
 
 export default function CategoryPickerModal({
@@ -50,7 +123,7 @@ export default function CategoryPickerModal({
       const data = await getActiveCategories(type);
       setCategories(data);
     } catch (e) {
-      console.error('Error fetching categories:', e);
+      console.error('Failed to load categories:', e);
     } finally {
       setLoading(false);
     }
@@ -58,17 +131,17 @@ export default function CategoryPickerModal({
 
   useEffect(() => {
     if (visible) {
+      fetchCategories();
       setIsCreating(false);
       setNewCatName('');
       setErrorMessage(null);
-      fetchCategories();
     }
   }, [visible, fetchCategories]);
 
   const handleCreateCategory = async () => {
     const trimmed = newCatName.trim();
     if (!trimmed) {
-      setErrorMessage('Isi nama kategori');
+      setErrorMessage('Nama kategori tidak boleh kosong');
       return;
     }
     if (trimmed.length > MAX_CATEGORY_NAME_LENGTH) {
@@ -78,50 +151,29 @@ export default function CategoryPickerModal({
 
     try {
       setSubmitting(true);
-      setErrorMessage(null);
-      const newCategory = await insertCategory(trimmed, type, selectedColor);
-      onSelect(newCategory);
-      setIsCreating(false);
-      setNewCatName('');
+      const newCat = await insertCategory(trimmed, type, selectedColor);
+
+      onSelect(newCat);
       onClose();
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Gagal membuat kategori';
-      setErrorMessage(msg);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Gagal membuat kategori';
+      setErrorMessage(message);
     } finally {
       setSubmitting(false);
     }
   };
 
   const renderCategoryItem = ({ item }: { item: Category }) => {
-    const isSelected = item.id === selectedId;
     return (
-      <Pressable
+      <CategoryItemRow
+        item={item}
+        isSelected={item.id === selectedId}
         onPress={() => {
           onSelect(item);
           onClose();
         }}
-        style={[
-          styles.categoryRow,
-          { borderBottomColor: colors.line },
-          isSelected ? [styles.selectedRow, { backgroundColor: colors.surfaceInput }] : null,
-        ]}
-        accessibilityRole="button"
-      >
-        <CategoryDot color={item.color || colors.primary} label={item.name} size="md" />
-        <Text
-          style={[
-            styles.categoryName,
-            { color: isSelected ? colors.primary : colors.ink },
-          ]}
-        >
-          {item.name}
-        </Text>
-        {isSelected ? (
-          <Icon icon={CheckmarkCircle01Icon} size={20} color={colors.primary} style={styles.chevron} />
-        ) : (
-          <Icon icon={ChevronRightIcon} size={18} color={colors.chevron} style={styles.chevron} />
-        )}
-      </Pressable>
+        colors={colors}
+      />
     );
   };
 
@@ -133,8 +185,13 @@ export default function CategoryPickerModal({
       scrollable={false}
     >
       {isCreating ? (
-        /* Create Mode */
-        <View style={styles.createContainer}>
+        /* transitions.dev 08-page-side-by-side: Create Mode */
+        <Animated.View
+          key="create"
+          entering={FadeInRight.duration(motionTokens.duration.fast)}
+          exiting={FadeOutLeft.duration(motionTokens.duration.quick)}
+          style={styles.createContainer}
+        >
           <TextInput
             label="Nama kategori"
             placeholder="Contoh: Kopi, Langganan"
@@ -156,7 +213,10 @@ export default function CategoryPickerModal({
                 <Pressable
                   key={color}
                   onPress={() => setSelectedColor(color)}
-                  style={styles.paletteTouch}
+                  style={({ pressed }) => [
+                    styles.paletteTouch,
+                    pressed && styles.paletteTouchPressed,
+                  ]}
                 >
                   <CategoryDot
                     color={color}
@@ -189,10 +249,15 @@ export default function CategoryPickerModal({
               style={styles.flexBtn}
             />
           </View>
-        </View>
+        </Animated.View>
       ) : (
-        /* List Mode */
-        <View style={styles.listContainer}>
+        /* transitions.dev 08-page-side-by-side: List Mode */
+        <Animated.View
+          key="list"
+          entering={FadeInLeft.duration(motionTokens.duration.fast)}
+          exiting={FadeOutRight.duration(motionTokens.duration.quick)}
+          style={styles.listContainer}
+        >
           {loading ? (
             <View style={styles.centerLoading}>
               <ActivityIndicator size="small" color={colors.primary} />
@@ -234,44 +299,27 @@ export default function CategoryPickerModal({
               style={styles.manageBtn}
             />
           ) : null}
-        </View>
+        </Animated.View>
       )}
     </BottomSheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  createContainer: {
-    paddingTop: spacing['2'],
-    paddingBottom: spacing['6'],
-  },
-  label: {
-    ...typography.captionBold,
-    marginTop: spacing['6'],
-    marginBottom: spacing['3'],
-  },
-  paletteRow: {
-    flexDirection: 'row',
-    gap: spacing['3'],
-    flexWrap: 'wrap',
-    marginBottom: spacing['6'],
-  },
-  paletteTouch: {
-    padding: 2,
-  },
-  paletteDotChosen: {
-    borderWidth: 2.5,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: spacing['4'],
-    marginTop: spacing['6'],
-  },
-  flexBtn: {
-    flex: 1,
-  },
   listContainer: {
-    paddingTop: spacing['2'],
+    paddingBottom: spacing['4'],
+  },
+  createContainer: {
+    paddingBottom: spacing['4'],
+  },
+  centerLoading: {
+    paddingVertical: spacing['10'],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    ...typography.body,
+    fontSize: 14,
   },
   list: {
     maxHeight: 280,
@@ -279,30 +327,56 @@ const styles = StyleSheet.create({
   categoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing['5'],
+    paddingVertical: spacing['4'],
+    paddingHorizontal: spacing['2'],
     borderBottomWidth: 1,
+    borderRadius: radii.md,
   },
-  selectedRow: {},
+  selectedRow: {
+    borderRadius: radii.md,
+  },
   categoryName: {
-    ...typography.bodyBold,
-    marginLeft: spacing['6'],
+    ...typography.body,
+    fontSize: 14,
+    marginLeft: spacing['4'],
     flex: 1,
   },
-  selectedCategoryName: {},
   chevron: {
-    marginLeft: 'auto',
+    marginLeft: spacing['2'],
   },
   newCatBtn: {
     marginTop: spacing['6'],
   },
   manageBtn: {
+    marginTop: spacing['3'],
+  },
+  label: {
+    ...typography.captionBold,
     marginTop: spacing['4'],
+    marginBottom: spacing['3'],
   },
-  centerLoading: {
-    padding: spacing['12'],
-    alignItems: 'center',
+  paletteRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing['4'],
+    marginBottom: spacing['8'],
   },
-  emptyText: {
-    ...typography.caption,
+  paletteTouch: {
+    padding: 2,
+    borderRadius: radii.full,
+  },
+  paletteTouchPressed: {
+    opacity: 0.7,
+    transform: [{ scale: 0.9 }],
+  },
+  paletteDotChosen: {
+    borderWidth: 2,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: spacing['3'],
+  },
+  flexBtn: {
+    flex: 1,
   },
 });

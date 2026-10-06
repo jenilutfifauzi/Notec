@@ -1,8 +1,68 @@
 import { Tabs, router } from 'expo-router';
 import { View, StyleSheet, Pressable } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  ReduceMotion,
+} from 'react-native-reanimated';
 import { Icon, Home01Icon, Add01Icon, Clock01Icon } from '@/lib/icons';
 import { useTheme } from '@/lib/theme';
 import { fontFamilies } from '@/lib/tokens';
+import { motionTokens, springBounce } from '@/lib/motion';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+function CenterAddButton({
+  onPress,
+  backgroundColor,
+  iconColor,
+}: {
+  onPress: () => void;
+  backgroundColor: string;
+  iconColor: string;
+}) {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      onPressIn={() => {
+        scale.value = withTiming(motionTokens.scale.pressAdd, {
+          duration: 120,
+          easing: motionTokens.easing.smoothOut,
+          reduceMotion: ReduceMotion.System,
+        });
+      }}
+      onPressOut={() => {
+        scale.value = springBounce(1);
+      }}
+      style={[styles.centerButtonContainer, animatedStyle]}
+      accessibilityLabel="Catat Transaksi"
+      accessibilityRole="button"
+    >
+      <View
+        style={[
+          styles.addButton,
+          {
+            backgroundColor,
+          },
+        ]}
+      >
+        <Icon
+          icon={Add01Icon}
+          size={26}
+          color={iconColor}
+        />
+      </View>
+    </AnimatedPressable>
+  );
+}
+
 export default function TabLayout() {
   const { mode, colors } = useTheme();
 
@@ -10,8 +70,6 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.muted,
         tabBarStyle: [
           styles.tabBar,
           {
@@ -19,17 +77,9 @@ export default function TabLayout() {
             borderTopColor: colors.line,
           },
         ],
-        tabBarLabelStyle: [styles.tabLabel, { color: mode === 'dark' ? colors.ink : undefined }],
-        tabBarButton: ({ ref, ...rest }) => (
-          <Pressable
-            {...rest}
-            android_ripple={null}
-            style={({ pressed }) => [
-              rest.style,
-              pressed && { opacity: 0.75 },
-            ]}
-          />
-        ),
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.barInactive,
+        tabBarLabelStyle: styles.tabLabel,
       }}
     >
       <Tabs.Screen
@@ -47,27 +97,11 @@ export default function TabLayout() {
           title: 'Catat',
           tabBarLabel: () => null,
           tabBarButton: () => (
-            <Pressable
+            <CenterAddButton
               onPress={() => router.push('/record')}
-              style={styles.centerButtonContainer}
-              accessibilityLabel="Catat Transaksi"
-              accessibilityRole="button"
-            >
-              <View
-                style={[
-                  styles.addButton,
-                  {
-                    backgroundColor: colors.primary,
-                  },
-                ]}
-              >
-                <Icon
-                  icon={Add01Icon}
-                  size={26}
-                  color={mode === 'dark' ? '#212121' : colors.white}
-                />
-              </View>
-            </Pressable>
+              backgroundColor={colors.primary}
+              iconColor={mode === 'dark' ? '#212121' : colors.white}
+            />
           ),
         }}
         listeners={{

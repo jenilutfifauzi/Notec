@@ -6,6 +6,7 @@ import {
   ViewStyle,
   StyleProp,
 } from 'react-native';
+import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { useTheme } from '@/lib/theme';
 import { radii, spacing, typography } from '@/lib/tokens';
 
@@ -36,13 +37,23 @@ export default function FormField({
       {children}
 
       {error && isBanner ? (
-        <View style={[styles.errorBanner, { backgroundColor: colors.errorBg, borderColor: colors.errorBorder }]}>
+        <Animated.View
+          entering={FadeInDown.duration(200)}
+          exiting={FadeOutUp.duration(150)}
+          style={[styles.errorBanner, { backgroundColor: colors.errorBg, borderColor: colors.errorBorder }]}
+        >
           <Text style={[styles.errorBannerText, { color: colors.red }]}>{error}</Text>
-        </View>
+        </Animated.View>
       ) : null}
       <View style={styles.footerRow}>
         {error && !isBanner ? (
-          <Text style={[styles.errorText, { color: colors.red }]}>{error}</Text>
+          <Animated.Text
+            entering={FadeInDown.duration(200)}
+            exiting={FadeOutUp.duration(150)}
+            style={[styles.errorText, { color: colors.red }]}
+          >
+            {error}
+          </Animated.Text>
         ) : (
           <View />
         )}

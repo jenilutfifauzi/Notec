@@ -7,9 +7,19 @@ import {
   ViewStyle,
   StyleProp,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  FadeInDown,
+  FadeOutUp,
+  ReduceMotion,
+} from 'react-native-reanimated';
 import { Icon, ChevronRightIcon } from '@/lib/icons';
 import { useTheme } from '@/lib/theme';
 import { radii, spacing, typography, fontFamilies } from '@/lib/tokens';
+import { motionTokens } from '@/lib/motion';
+
 export interface SelectFieldProps {
   label?: string;
   value?: string;
@@ -20,6 +30,8 @@ export interface SelectFieldProps {
   error?: string;
   style?: StyleProp<ViewStyle>;
 }
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function SelectField({
   label,
@@ -34,19 +46,39 @@ export default function SelectField({
   const { colors } = useTheme();
   const hasValue = Boolean(value);
 
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
     <View style={styles.wrapper}>
       {label ? <Text style={[styles.label, { color: colors.ink }]}>{label}</Text> : null}
 
-      <Pressable
+      <AnimatedPressable
         onPress={onPress}
+        onPressIn={() => {
+          scale.value = withTiming(0.985, {
+            duration: 100,
+            easing: motionTokens.easing.smoothOut,
+            reduceMotion: ReduceMotion.System,
+          });
+        }}
+        onPressOut={() => {
+          scale.value = withTiming(1, {
+            duration: 200,
+            easing: motionTokens.easing.smoothOut,
+            reduceMotion: ReduceMotion.System,
+          });
+        }}
         accessibilityRole="button"
         accessibilityLabel={label ? `${label}: ${value || placeholder}` : value || placeholder}
-        style={({ pressed }) => [
+        style={[
           styles.container,
           { backgroundColor: colors.white, borderColor: colors.border },
           error ? { borderColor: colors.red } : null,
-          pressed && styles.pressed,
+          animatedStyle,
           style,
         ]}
       >
@@ -68,8 +100,17 @@ export default function SelectField({
         ) : (
           <Icon icon={ChevronRightIcon} size={18} color={colors.primary} />
         )}
-      </Pressable>
-      {error ? <Text style={[styles.errorText, { color: colors.red }]}>{error}</Text> : null}
+      </AnimatedPressable>
+
+      {error ? (
+        <Animated.Text
+          entering={FadeInDown.duration(200)}
+          exiting={FadeOutUp.duration(150)}
+          style={[styles.errorText, { color: colors.red }]}
+        >
+          {error}
+        </Animated.Text>
+      ) : null}
     </View>
   );
 }
@@ -86,23 +127,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderRadius: radii.lg,
-    borderCurve: 'continuous',
+    minHeight: 44,
     paddingHorizontal: spacing['7'],
-    paddingVertical: spacing['6'],
-    minHeight: 48,
+    borderWidth: 1,
+    borderRadius: radii.md,
+    borderCurve: 'continuous',
   },
   contentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    marginRight: spacing['3'],
   },
   leftIconWrap: {
-    marginRight: spacing['4'],
-    alignItems: 'center',
+    marginRight: spacing['3'],
     justifyContent: 'center',
+    alignItems: 'center',
   },
   text: {
     ...typography.body,
@@ -118,8 +157,5 @@ const styles = StyleSheet.create({
   errorText: {
     ...typography.caption,
     marginTop: spacing['2'],
-  },
-  pressed: {
-    opacity: 0.85,
   },
 });

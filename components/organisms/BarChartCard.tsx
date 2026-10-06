@@ -1,9 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  FadeIn,
+  ReduceMotion,
+} from 'react-native-reanimated';
 import { ExpenseTrendMonth } from '@/db/queries/transactions';
 import { formatCompactRupiah } from '@/lib/format';
 import { useTheme } from '@/lib/theme';
 import { fontFamilies, spacing } from '@/lib/tokens';
+import { motionTokens } from '@/lib/motion';
 import Card from '@/components/atoms/Card';
 
 export interface BarChartCardProps {
@@ -11,6 +19,109 @@ export interface BarChartCardProps {
   selectedYear: number;
   selectedMonth: number;
   onPressMonth?: (year: number, month: number) => void;
+}
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+function AnimatedBar({
+  targetHeight,
+  isSelected,
+  selectedColor,
+  inactiveColor,
+}: {
+  targetHeight: number;
+  isSelected: boolean;
+  selectedColor: string;
+  inactiveColor: string;
+}) {
+  const heightVal = useSharedValue(4);
+
+  useEffect(() => {
+    heightVal.value = withTiming(targetHeight, {
+      duration: motionTokens.presets.cardResize.duration,
+      easing: motionTokens.presets.cardResize.easing,
+      reduceMotion: ReduceMotion.System,
+    });
+  }, [targetHeight, heightVal]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    height: heightVal.value,
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        styles.bar,
+        { backgroundColor: isSelected ? selectedColor : inactiveColor },
+        animatedStyle,
+      ]}
+    />
+  );
+}
+
+function BarColumn({
+  d,
+  isSelected,
+  barHeight,
+  barColor,
+  inactiveColor,
+  onPress,
+  colors,
+}: {
+  d: ExpenseTrendMonth;
+  isSelected: boolean;
+  barHeight: number;
+  barColor: string;
+  inactiveColor: string;
+  onPress?: () => void;
+  colors: { ink: string; muted: string };
+}) {
+  const scale = useSharedValue(1);
+
+  const animatedColStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      onPressIn={() => {
+        scale.value = withTiming(0.92, {
+          duration: 100,
+          easing: motionTokens.easing.smoothOut,
+          reduceMotion: ReduceMotion.System,
+        });
+      }}
+      onPressOut={() => {
+        scale.value = withTiming(1, {
+          duration: 200,
+          easing: motionTokens.easing.smoothOut,
+          reduceMotion: ReduceMotion.System,
+        });
+      }}
+      style={[styles.barCol, animatedColStyle]}
+      accessibilityRole="button"
+      accessibilityLabel={`${d.label}: ${formatCompactRupiah(d.total)}`}
+    >
+      <AnimatedBar
+        targetHeight={barHeight}
+        isSelected={isSelected}
+        selectedColor={barColor}
+        inactiveColor={inactiveColor}
+      />
+      <Text
+        style={[
+          styles.monthLabel,
+          {
+            color: isSelected ? colors.ink : colors.muted,
+            fontFamily: isSelected ? fontFamilies.bold : fontFamilies.medium,
+          },
+        ]}
+      >
+        {d.label}
+      </Text>
+    </AnimatedPressable>
+  );
 }
 
 export default function BarChartCard({
@@ -49,9 +160,13 @@ export default function BarChartCard({
                 { backgroundColor: mode === 'dark' ? '#303030' : colors.surfaceControl },
               ]}
             >
-              <Text style={[styles.monthPillText, { color: colors.ink }]}>
+              <Animated.Text
+                key={`${selectedData.year}-${selectedData.month}-${selectedData.total}`}
+                entering={FadeIn.duration(200)}
+                style={[styles.monthPillText, { color: colors.ink }]}
+              >
                 {`${selectedData.label} · ${formatCompactRupiah(selectedData.total)}`}
-              </Text>
+              </Animated.Text>
             </View>
           ) : null}
         </View>
@@ -65,41 +180,19 @@ export default function BarChartCard({
                 ? Math.max(Math.round((d.total / maxVal) * 80), 8)
                 : 4;
 
-            const barColor = isSelected
-              ? colors.primary
-              : mode === 'dark'
-                ? '#f1f1f1'
-                : colors.primaryBarInactive;
+            const inactiveColor = mode === 'dark' ? '#f1f1f1' : colors.primaryBarInactive;
 
             return (
-              <Pressable
+              <BarColumn
                 key={`${d.year}-${d.month}`}
-                onPress={() => onPressMonth?.(d.year, d.month)}
-                style={styles.barCol}
-                accessibilityRole="button"
-                accessibilityLabel={`${d.label}: ${formatCompactRupiah(d.total)}`}
-              >
-                <View
-                  style={[
-                    styles.bar,
-                    {
-                      height: barHeight,
-                      backgroundColor: barColor,
-                    },
-                  ]}
-                />
-                <Text
-                  style={[
-                    styles.monthLabel,
-                    {
-                      color: isSelected ? colors.ink : colors.muted,
-                      fontFamily: isSelected ? fontFamilies.bold : fontFamilies.medium,
-                    },
-                  ]}
-                >
-                  {d.label}
-                </Text>
-              </Pressable>
+                d={d}
+                isSelected={isSelected}
+                barHeight={barHeight}
+                barColor={colors.primary}
+                inactiveColor={inactiveColor}
+                onPress={onPressMonth ? () => onPressMonth(d.year, d.month) : undefined}
+                colors={colors}
+              />
             );
           })}
         </View>
@@ -116,76 +209,66 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 11,
+    marginBottom: spacing['2'],
   },
   sectionTitle: {
-    fontFamily: fontFamilies.semiBold,
-    fontSize: 15,
-    letterSpacing: -0.2,
-    lineHeight: 19,
+    fontFamily: fontFamilies.bold,
+    fontSize: 16,
+    lineHeight: 20,
   },
   badgeBtn: {
-    padding: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
   badgeBtnText: {
     fontFamily: fontFamilies.semiBold,
     fontSize: 12,
-    lineHeight: 15,
   },
   card: {
-    borderRadius: 14,
+    paddingTop: 16,
+    paddingBottom: 8,
     paddingHorizontal: 12,
-    paddingTop: 14,
-    paddingBottom: 16,
   },
   cardTopRow: {
-    height: 38.5,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 3,
+    marginBottom: 8,
   },
   perBulanText: {
     fontFamily: fontFamilies.semiBold,
-    fontSize: 13,
-    lineHeight: 16,
+    fontSize: 12,
   },
   monthPill: {
-    borderRadius: 20,
-    paddingVertical: 5,
     paddingHorizontal: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingVertical: 3,
+    borderRadius: 6,
   },
   monthPillText: {
     fontFamily: fontFamilies.semiBold,
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 12,
   },
   chartRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     alignItems: 'flex-end',
+    height: 125,
+    paddingBottom: 8,
     borderBottomWidth: 1,
-    paddingBottom: 6,
-    paddingHorizontal: 4,
-    height: 111,
   },
   barCol: {
-    width: 32,
-    height: 111,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-end',
-    gap: 6,
+    height: '100%',
   },
   bar: {
-    width: 18,
-    borderTopLeftRadius: 5,
-    borderTopRightRadius: 5,
-    borderBottomLeftRadius: 2,
-    borderBottomRightRadius: 2,
+    width: 28,
+    borderTopLeftRadius: 6,
+    borderTopRightRadius: 6,
+    borderCurve: 'continuous',
+    marginBottom: 8,
   },
   monthLabel: {
     fontSize: 11,

@@ -123,7 +123,11 @@ export default function BottomSheetWrapper({
         hitSlop={10}
         accessibilityRole="button"
         accessibilityLabel="Tutup"
-        style={[styles.closeBtn, themedStyles.closeBtn]}
+        style={({ pressed }) => [
+          styles.closeBtn,
+          themedStyles.closeBtn,
+          pressed && styles.closeBtnPressed,
+        ]}
       >
         <Icon icon={Cancel01Icon} size={20} color={colors.ink} />
       </Pressable>
@@ -202,6 +206,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  closeBtnPressed: {
+    opacity: 0.6,
+    transform: [{ scale: 0.9 }],
   },
   scroll: {
     flexShrink: 1,

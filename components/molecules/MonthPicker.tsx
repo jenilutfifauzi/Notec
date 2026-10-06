@@ -1,9 +1,19 @@
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  FadeInRight,
+  FadeInLeft,
+  FadeIn,
+  ReduceMotion,
+} from 'react-native-reanimated';
 import { Icon, ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon, CancelCircleIcon } from '@/lib/icons';
 import { monthYearFormatter } from '@/lib/format';
 import { useTheme } from '@/lib/theme';
 import { radii, typography, fontFamilies } from '@/lib/tokens';
+import { motionTokens } from '@/lib/motion';
 
 export interface MonthPickerProps {
   year: number;
@@ -15,6 +25,8 @@ export interface MonthPickerProps {
   hasCustomFilter?: boolean;
   onClearCustomFilter?: () => void;
 }
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function MonthPicker({
   year,
@@ -32,7 +44,19 @@ export default function MonthPicker({
   const date = new Date(year, month - 1, 1);
   const formatted = monthYearFormatter.format(date);
   const displayText = (customLabel || formatted).replace(/\s*⌄$/, '');
+
+  const [slideDirection, setSlideDirection] = useState<'forward' | 'backward' | null>(null);
+  const prevDateKeyRef = useRef(`${year}-${month}`);
+
+  useEffect(() => {
+    const currentKey = `${year}-${month}`;
+    if (prevDateKeyRef.current !== currentKey) {
+      prevDateKeyRef.current = currentKey;
+    }
+  }, [year, month]);
+
   const handlePrev = () => {
+    setSlideDirection('backward');
     if (month === 1) {
       onChange(year - 1, 12);
     } else {
@@ -41,6 +65,7 @@ export default function MonthPicker({
   };
 
   const handleNext = () => {
+    setSlideDirection('forward');
     if (month === 12) {
       onChange(year + 1, 1);
     } else {
@@ -48,12 +73,37 @@ export default function MonthPicker({
     }
   };
 
+  const prevScale = useSharedValue(1);
+  const nextScale = useSharedValue(1);
+
+  const prevAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: prevScale.value }],
+  }));
+
+  const nextAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: nextScale.value }],
+  }));
+
   return (
     <View style={[styles.container, isHero ? styles.heroContainer : styles.lightContainer]}>
       {!isHero ? (
-        <Pressable
+        <AnimatedPressable
           onPress={handlePrev}
-          style={styles.arrowButton}
+          onPressIn={() => {
+            prevScale.value = withTiming(0.88, {
+              duration: 100,
+              easing: motionTokens.easing.smoothOut,
+              reduceMotion: ReduceMotion.System,
+            });
+          }}
+          onPressOut={() => {
+            prevScale.value = withTiming(1, {
+              duration: 200,
+              easing: motionTokens.easing.smoothOut,
+              reduceMotion: ReduceMotion.System,
+            });
+          }}
+          style={[styles.arrowButton, prevAnimatedStyle]}
           hitSlop={8}
           accessibilityLabel="Bulan sebelumnya"
           accessibilityRole="button"
@@ -63,21 +113,31 @@ export default function MonthPicker({
             size={18}
             color={colors.iconMuted}
           />
-        </Pressable>
+        </AnimatedPressable>
       ) : null}
 
       {onPressTitle ? (
         <Pressable
           onPress={onPressTitle}
-          style={[
+          style={({ pressed }) => [
             styles.titleButton,
             hasCustomFilter ? [styles.titleButtonActive, { backgroundColor: colors.primaryPale }] : null,
+            pressed && styles.titleButtonPressed,
           ]}
           hitSlop={6}
           accessibilityRole="button"
           accessibilityLabel="Ubah periode tanggal"
         >
-          <Text
+          {/* transitions.dev text states swap with page slide distance */}
+          <Animated.Text
+            key={displayText}
+            entering={
+              slideDirection === 'backward'
+                ? FadeInLeft.duration(motionTokens.presets.textSwap.duration)
+                : slideDirection === 'forward'
+                ? FadeInRight.duration(motionTokens.presets.textSwap.duration)
+                : FadeIn.duration(motionTokens.presets.textSwap.duration)
+            }
             style={[
               styles.monthText,
               isHero ? styles.heroText : [styles.lightText, { color: colors.ink }],
@@ -85,7 +145,7 @@ export default function MonthPicker({
             ]}
           >
             {displayText}
-          </Text>
+          </Animated.Text>
           {!isHero ? (
             <Icon
               icon={ChevronDownIcon}
@@ -96,14 +156,21 @@ export default function MonthPicker({
         </Pressable>
       ) : (
         <View style={isHero ? styles.heroContentRow : null}>
-          <Text
+          <Animated.Text
+            entering={
+              slideDirection === 'backward'
+                ? FadeInLeft.duration(motionTokens.presets.textSwap.duration)
+                : slideDirection === 'forward'
+                ? FadeInRight.duration(motionTokens.presets.textSwap.duration)
+                : FadeIn.duration(motionTokens.presets.textSwap.duration)
+            }
             style={[
               styles.monthText,
               isHero ? styles.heroText : [styles.lightText, { color: colors.ink }],
             ]}
           >
             {displayText}
-          </Text>
+          </Animated.Text>
           {isHero ? (
             <Icon icon={ChevronDownIcon} size={12} color="#063b1b" strokeWidth={1.75} />
           ) : null}
@@ -113,7 +180,7 @@ export default function MonthPicker({
       {hasCustomFilter && onClearCustomFilter ? (
         <Pressable
           onPress={onClearCustomFilter}
-          style={styles.clearBtn}
+          style={({ pressed }) => [styles.clearBtn, pressed && styles.clearBtnPressed]}
           hitSlop={8}
           accessibilityLabel="Hapus filter tanggal"
           accessibilityRole="button"
@@ -123,9 +190,23 @@ export default function MonthPicker({
       ) : null}
 
       {!isHero ? (
-        <Pressable
+        <AnimatedPressable
           onPress={handleNext}
-          style={styles.arrowButton}
+          onPressIn={() => {
+            nextScale.value = withTiming(0.88, {
+              duration: 100,
+              easing: motionTokens.easing.smoothOut,
+              reduceMotion: ReduceMotion.System,
+            });
+          }}
+          onPressOut={() => {
+            nextScale.value = withTiming(1, {
+              duration: 200,
+              easing: motionTokens.easing.smoothOut,
+              reduceMotion: ReduceMotion.System,
+            });
+          }}
+          style={[styles.arrowButton, nextAnimatedStyle]}
           hitSlop={8}
           accessibilityLabel="Bulan berikutnya"
           accessibilityRole="button"
@@ -135,7 +216,7 @@ export default function MonthPicker({
             size={18}
             color={colors.iconMuted}
           />
-        </Pressable>
+        </AnimatedPressable>
       ) : null}
     </View>
   );
@@ -145,19 +226,16 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
   heroContainer: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#e7f2b0',
-    borderWidth: 1,
-    borderColor: '#063b1b55',
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    height: 34,
-    justifyContent: 'center',
-    paddingVertical: 6,
+    alignSelf: 'center',
+    backgroundColor: '#95ce3f',
+    paddingVertical: 5,
     paddingHorizontal: 12,
+    borderRadius: radii.full,
+    borderCurve: 'continuous',
+    marginTop: 6,
   },
   heroContentRow: {
     flexDirection: 'row',
@@ -165,9 +243,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   lightContainer: {
+    justifyContent: 'space-between',
     paddingVertical: 6,
-    paddingHorizontal: 4,
-    gap: 12,
   },
   arrowButton: {
     padding: 6,
@@ -176,25 +253,30 @@ const styles = StyleSheet.create({
   titleButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
     paddingVertical: 4,
     paddingHorizontal: 8,
-    borderRadius: radii['2xl'],
+    borderRadius: radii.sm,
+  },
+  titleButtonPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.97 }],
   },
   titleButtonActive: {},
-  customFilterText: {},
   clearBtn: {
     padding: 4,
   },
+  clearBtnPressed: {
+    opacity: 0.6,
+    transform: [{ scale: 0.9 }],
+  },
   monthText: {
-    ...typography.captionBold,
-    textTransform: 'capitalize',
+    textAlign: 'center',
   },
   heroText: {
+    fontFamily: fontFamilies.bold,
+    fontSize: 11,
     color: '#063b1b',
-    fontFamily: fontFamilies.semiBold,
-    fontSize: 12,
-    letterSpacing: 0,
   },
   lightText: {
     ...typography.titleSmall,

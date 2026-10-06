@@ -1,8 +1,15 @@
 import React, { memo } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  ReduceMotion,
+} from 'react-native-reanimated';
 import { formatRupiah, formatDateShort, getTodayDateString } from '@/lib/format';
 import { useTheme } from '@/lib/theme';
 import { fontFamilies } from '@/lib/tokens';
+import { motionTokens } from '@/lib/motion';
 import {
   Icon,
   Coffee02Icon,
@@ -28,6 +35,8 @@ export interface TransactionItemProps {
   onPress?: (id: number) => void;
   onLongPress?: (id: number) => void;
 }
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 function getCategoryIcon(name: string): IconSvgElement {
   const lower = (name || '').toLowerCase();
@@ -64,23 +73,52 @@ const TransactionItem = memo(function TransactionItem({
   const formattedAmount = `${isExpense ? '−' : '+'}${formatRupiah(amountIdr)}`;
   const iconDef = getCategoryIcon(categoryName);
 
-  const handlePress = () => {
-    if (onPress) onPress(id);
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+
+  const handlePressIn = () => {
+    scale.value = withTiming(0.985, {
+      duration: motionTokens.presets.press.pressInDuration,
+      easing: motionTokens.easing.smoothOut,
+      reduceMotion: ReduceMotion.System,
+    });
+    opacity.value = withTiming(0.88, {
+      duration: motionTokens.presets.press.pressInDuration,
+      easing: motionTokens.easing.smoothOut,
+      reduceMotion: ReduceMotion.System,
+    });
   };
 
-  const handleLongPress = () => {
-    if (onLongPress) onLongPress(id);
+  const handlePressOut = () => {
+    scale.value = withTiming(1, {
+      duration: motionTokens.presets.press.pressOutDuration,
+      easing: motionTokens.easing.smoothOut,
+      reduceMotion: ReduceMotion.System,
+    });
+    opacity.value = withTiming(1, {
+      duration: motionTokens.presets.press.pressOutDuration,
+      easing: motionTokens.easing.smoothOut,
+      reduceMotion: ReduceMotion.System,
+    });
   };
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+      opacity: opacity.value,
+    };
+  });
 
   return (
-    <Pressable
-      onPress={handlePress}
-      onLongPress={handleLongPress}
-      style={styles.container}
+    <AnimatedPressable
+      onPress={onPress ? () => onPress(id) : undefined}
+      onLongPress={onLongPress ? () => onLongPress(id) : undefined}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[styles.container, animatedStyle]}
       accessibilityRole="button"
       accessibilityLabel={`${title}, ${formattedAmount}, ${subtitle}`}
     >
-      {/* Category Icon / Emoji */}
       {/* Category Icon */}
       <View
         style={[
@@ -114,7 +152,7 @@ const TransactionItem = memo(function TransactionItem({
 
       {/* Amount */}
       <Text style={[styles.amount, { color: colors.ink }]}>{formattedAmount}</Text>
-    </Pressable>
+    </AnimatedPressable>
   );
 });
 
@@ -126,38 +164,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingVertical: 8,
-    width: '100%',
+    borderRadius: 8,
   },
   iconContainer: {
     width: 38,
     height: 38,
-    borderRadius: 12,
+    borderRadius: 10,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emojiText: {
-    fontSize: 18,
-    lineHeight: 22,
-  },
   textContainer: {
     flex: 1,
-    gap: 3,
+    justifyContent: 'center',
   },
   title: {
-    fontFamily: fontFamilies.semiBold,
+    fontFamily: fontFamilies.bold,
     fontSize: 14,
     lineHeight: 18,
+    marginBottom: 2,
   },
   subtitle: {
-    fontFamily: fontFamilies.regular,
-    fontSize: 12,
-    lineHeight: 15,
+    fontFamily: fontFamilies.medium,
+    fontSize: 11,
+    lineHeight: 14,
   },
   amount: {
     fontFamily: fontFamilies.bold,
     fontSize: 14,
     lineHeight: 18,
-    fontVariant: ['tabular-nums'],
+    textAlign: 'right',
   },
 });

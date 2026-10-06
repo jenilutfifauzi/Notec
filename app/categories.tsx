@@ -8,6 +8,15 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  FadeInDown,
+  FadeOutUp,
+  ReduceMotion,
+} from 'react-native-reanimated';
+import { motionTokens } from '@/lib/motion';
 import { router } from 'expo-router';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import {
@@ -48,7 +57,7 @@ import {
   TextInput,
   Card,
 } from '@/components/ui';
-
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 interface CategoryRowProps {
   id: number;
   name: string;
@@ -63,10 +72,30 @@ const CategoryRow = memo(function CategoryRow({
   onPress,
 }: CategoryRowProps) {
   const { colors } = useTheme();
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
-    <Pressable
-      style={[styles.categoryRow, { borderBottomColor: colors.line }]}
+    <AnimatedPressable
+      style={[styles.categoryRow, { borderBottomColor: colors.line }, animatedStyle]}
       onPress={() => onPress(id)}
+      onPressIn={() => {
+        scale.value = withTiming(0.98, {
+          duration: 100,
+          easing: motionTokens.easing.smoothOut,
+          reduceMotion: ReduceMotion.System,
+        });
+      }}
+      onPressOut={() => {
+        scale.value = withTiming(1, {
+          duration: 200,
+          easing: motionTokens.easing.smoothOut,
+          reduceMotion: ReduceMotion.System,
+        });
+      }}
       accessibilityRole="button"
       accessibilityLabel={`Kategori ${name}`}
     >
@@ -75,7 +104,7 @@ const CategoryRow = memo(function CategoryRow({
         {name}
       </Text>
       <Icon icon={ChevronRightIcon} size={18} color={colors.chevron} />
-    </Pressable>
+    </AnimatedPressable>
   );
 });
 
@@ -86,6 +115,21 @@ export default function CategoriesScreen() {
   const [archivedList, setArchivedList] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showArchived, setShowArchived] = useState(false);
+
+  // transitions.dev 21-accordion: Chevron vertical flip scaleY(-1)
+  const chevronScaleY = useSharedValue(1);
+
+  useEffect(() => {
+    chevronScaleY.value = withTiming(showArchived ? -1 : 1, {
+      duration: motionTokens.presets.accordion.chevronDuration,
+      easing: motionTokens.presets.accordion.easing,
+      reduceMotion: ReduceMotion.System,
+    });
+  }, [showArchived, chevronScaleY]);
+
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [{ scaleY: chevronScaleY.value }],
+  }));
 
   // Modal state (add or edit)
   const [modalVisible, setModalVisible] = useState(false);
@@ -298,31 +342,35 @@ export default function CategoriesScreen() {
               <Text style={[styles.archivedTitle, { color: colors.muted }]}>
                 Diarsipkan ({archivedList.length})
               </Text>
-              <Icon
-                icon={showArchived ? ChevronUpIcon : ChevronDownIcon}
-                size={18}
-                color={colors.muted}
-              />
+              <Animated.View style={chevronStyle}>
+                <Icon
+                  icon={ChevronDownIcon}
+                  size={18}
+                  color={colors.muted}
+                />
+              </Animated.View>
             </Pressable>
 
             {showArchived ? (
-              <Card style={styles.listCard}>
-                {archivedList.map((item) => (
-                  <View key={item.id} style={[styles.archivedRow, { borderBottomColor: colors.line }]}>
-                    <CategoryDot
-                      color={item.color || colors.muted}
-                      size="sm"
-                    />
-                    <Text style={[styles.archivedName, { color: colors.muted }]}>{item.name}</Text>
-                    <Pressable
-                      style={[styles.restoreBtn, { backgroundColor: colors.primaryPale }]}
-                      onPress={() => handleUnarchive(item)}
-                    >
-                      <Text style={[styles.restoreBtnText, { color: colors.primary }]}>Aktifkan kembali</Text>
-                    </Pressable>
-                  </View>
-                ))}
-              </Card>
+              <Animated.View entering={FadeInDown.duration(250)} exiting={FadeOutUp.duration(200)}>
+                <Card style={styles.listCard}>
+                  {archivedList.map((item) => (
+                    <View key={item.id} style={[styles.archivedRow, { borderBottomColor: colors.line }]}>
+                      <CategoryDot
+                        color={item.color || colors.muted}
+                        size="sm"
+                      />
+                      <Text style={[styles.archivedName, { color: colors.muted }]}>{item.name}</Text>
+                      <Pressable
+                        style={[styles.restoreBtn, { backgroundColor: colors.primaryPale }]}
+                        onPress={() => handleUnarchive(item)}
+                      >
+                        <Text style={[styles.restoreBtnText, { color: colors.primary }]}>Aktifkan kembali</Text>
+                      </Pressable>
+                    </View>
+                  ))}
+                </Card>
+              </Animated.View>
             ) : null}
           </View>
         ) : null}

@@ -1,8 +1,9 @@
 import { Stack } from 'expo-router';
+import * as ExpoSplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, StyleSheet, Text, View, Pressable } from 'react-native';
+import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
 import { useEffect, useState } from 'react';
 import { db, getDbInitError } from '../db/client';
@@ -19,6 +20,11 @@ import {
   Geist_800ExtraBold,
   Geist_900Black,
 } from '@expo-google-fonts/geist';
+
+// Prevent native splash screen from hiding automatically until JS app is ready
+ExpoSplashScreen.preventAutoHideAsync().catch(() => {
+  // Fallback gracefully on environments where native splash module is not active
+});
 
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
   const isSharedArrayBufferError = error.message?.includes('SharedArrayBuffer');
@@ -54,6 +60,7 @@ function RootLayoutInner() {
   const initError = getDbInitError();
 
   if (initError) {
+    ExpoSplashScreen.hideAsync().catch(() => {});
     const isSharedArrayBufferError = initError.message?.includes('SharedArrayBuffer');
     return (
       <View style={styles.center}>
@@ -84,6 +91,7 @@ function RootLayoutContent() {
   });
   const { success, error } = useMigrations(db, migrations);
   const [seeded, setSeeded] = useState(false);
+
   useEffect(() => {
     if (!success) return;
     seedCategories()
@@ -94,6 +102,15 @@ function RootLayoutContent() {
       });
   }, [success]);
 
+  const isReady = Boolean(success && seeded && (fontsLoaded || fontError));
+
+  // Dismiss native OS splash screen once fonts and DB are ready
+  useEffect(() => {
+    if (isReady || error) {
+      ExpoSplashScreen.hideAsync().catch(() => {});
+    }
+  }, [isReady, error]);
+
   if (error) {
     return (
       <View style={styles.center}>
@@ -102,17 +119,13 @@ function RootLayoutContent() {
       </View>
     );
   }
-
-  if (!success || !seeded || (!fontsLoaded && !fontError)) {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.bg }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+  if (!isReady) {
+    return null;
   }
 
   return (
-    <BottomSheetModalProvider>
+    <View style={styles.rootContainer}>
+      <BottomSheetModalProvider>
         <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
         <Stack
           screenOptions={{
@@ -143,11 +156,15 @@ function RootLayoutContent() {
             }}
           />
         </Stack>
-    </BottomSheetModalProvider>
+      </BottomSheetModalProvider>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  rootContainer: {
+    flex: 1,
+  },
   center: {
     flex: 1,
     justifyContent: 'center',

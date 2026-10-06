@@ -265,7 +265,12 @@ export default function SettingsScreen() {
         <SectionHeader title="KATEGORI" variant="overline" style={styles.sectionHeaderWrap} />
         <Card style={styles.menuCard}>
           <Pressable
-            style={[styles.menuRow, styles.menuRowLast, { borderBottomColor: colors.line }]}
+            style={({ pressed }: { pressed: boolean }) => [
+              styles.menuRow,
+              styles.menuRowLast,
+              { borderBottomColor: colors.line },
+              pressed && styles.menuRowPressed,
+            ]}
             onPress={() => router.push('/categories')}
             accessibilityRole="button"
           >
@@ -284,7 +289,15 @@ export default function SettingsScreen() {
         <SectionHeader title="DATA & CADANGAN" variant="overline" style={styles.sectionHeaderWrap} />
         <Card style={styles.menuCard}>
           {/* Cadangkan Data */}
-          <Pressable style={[styles.menuRow, { borderBottomColor: colors.line }]} onPress={handleStartBackup} accessibilityRole="button">
+          <Pressable
+            style={({ pressed }: { pressed: boolean }) => [
+              styles.menuRow,
+              { borderBottomColor: colors.line },
+              pressed && styles.menuRowPressed,
+            ]}
+            onPress={handleStartBackup}
+            accessibilityRole="button"
+          >
             <View style={[styles.menuIconWrap, { backgroundColor: colors.primaryPale }]}>
               <Icon icon={CloudUploadIcon} size={20} color={colors.primary} />
             </View>
@@ -296,7 +309,15 @@ export default function SettingsScreen() {
           </Pressable>
 
           {/* Pulihkan Cadangan */}
-          <Pressable style={[styles.menuRow, { borderBottomColor: colors.line }]} onPress={handleStartRestore} accessibilityRole="button">
+          <Pressable
+            style={({ pressed }: { pressed: boolean }) => [
+              styles.menuRow,
+              { borderBottomColor: colors.line },
+              pressed && styles.menuRowPressed,
+            ]}
+            onPress={handleStartRestore}
+            accessibilityRole="button"
+          >
             <View style={[styles.menuIconWrap, { backgroundColor: colors.transactionIconBg }]}>
               <Icon icon={CloudDownloadIcon} size={20} color={colors.transactionIconColor} />
             </View>
@@ -309,7 +330,11 @@ export default function SettingsScreen() {
 
           {/* Hapus Semua Data */}
           <Pressable
-            style={[styles.menuRow, styles.menuRowLast]}
+            style={({ pressed }: { pressed: boolean }) => [
+              styles.menuRow,
+              styles.menuRowLast,
+              pressed && styles.menuRowPressed,
+            ]}
             onPress={() => setShowDeleteConfirm(true)}
             accessibilityRole="button"
           >
@@ -496,6 +521,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: spacing['8'],
     borderBottomWidth: 1,
+  },
+  menuRowPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.985 }],
   },
   menuRowLast: {
     borderBottomWidth: 0,

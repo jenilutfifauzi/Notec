@@ -6,8 +6,16 @@ import {
   ViewStyle,
   StyleProp,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  ReduceMotion,
+} from 'react-native-reanimated';
 import { useTheme } from '@/lib/theme';
 import { radii, spacing } from '@/lib/tokens';
+import { motionTokens } from '@/lib/motion';
+
 export type CardVariant = 'default' | 'metric';
 
 export interface CardProps {
@@ -18,6 +26,8 @@ export interface CardProps {
   accessibilityLabel?: string;
 }
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 export default function Card({
   children,
   style,
@@ -27,6 +37,42 @@ export default function Card({
 }: CardProps) {
   const { colors, shadows } = useTheme();
   const isMetric = variant === 'metric';
+
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+
+  const handlePressIn = () => {
+    scale.value = withTiming(0.985, {
+      duration: motionTokens.presets.press.pressInDuration,
+      easing: motionTokens.easing.smoothOut,
+      reduceMotion: ReduceMotion.System,
+    });
+    opacity.value = withTiming(0.92, {
+      duration: motionTokens.presets.press.pressInDuration,
+      easing: motionTokens.easing.smoothOut,
+      reduceMotion: ReduceMotion.System,
+    });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withTiming(1, {
+      duration: motionTokens.presets.press.pressOutDuration,
+      easing: motionTokens.easing.smoothOut,
+      reduceMotion: ReduceMotion.System,
+    });
+    opacity.value = withTiming(1, {
+      duration: motionTokens.presets.press.pressOutDuration,
+      easing: motionTokens.easing.smoothOut,
+      reduceMotion: ReduceMotion.System,
+    });
+  };
+
+  const animatedPressStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+      opacity: opacity.value,
+    };
+  });
 
   const themedStyles = useMemo(
     () =>
@@ -47,19 +93,22 @@ export default function Card({
     isMetric ? styles.metric : styles.default,
     style,
   ];
+
   if (onPress) {
     return (
-      <Pressable
+      <AnimatedPressable
         onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
-        style={({ pressed }) => [
+        style={[
           ...containerStyles,
-          pressed && styles.pressed,
+          animatedPressStyle,
         ]}
       >
         {children}
-      </Pressable>
+      </AnimatedPressable>
     );
   }
 
@@ -74,8 +123,5 @@ const styles = StyleSheet.create({
   metric: {
     borderRadius: radii.xl,
     padding: spacing['7'],
-  },
-  pressed: {
-    opacity: 0.9,
   },
 });

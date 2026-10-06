@@ -11,6 +11,16 @@ import {
   Alert,
   Keyboard,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSequence,
+  withTiming,
+  FadeInDown,
+  FadeOutUp,
+  ReduceMotion,
+} from 'react-native-reanimated';
+import { motionTokens } from '@/lib/motion';
 import { useLocalSearchParams, router } from 'expo-router';
 import {
   getSpeechRecognitionModule,
@@ -94,6 +104,36 @@ export default function RecordScreen() {
   const [pickerModalVisible, setPickerModalVisible] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
 
+  // transitions.dev 12-error-state-shake for nominal field
+  const nominalShakeX = useSharedValue(0);
+  const triggerNominalShake = () => {
+    nominalShakeX.value = withSequence(
+      withTiming(motionTokens.presets.shake.distance, {
+        duration: motionTokens.presets.shake.durA,
+        easing: motionTokens.presets.shake.easing,
+        reduceMotion: ReduceMotion.System,
+      }),
+      withTiming(-motionTokens.presets.shake.distance, {
+        duration: motionTokens.presets.shake.durA,
+        easing: motionTokens.presets.shake.easing,
+        reduceMotion: ReduceMotion.System,
+      }),
+      withTiming(motionTokens.presets.shake.overshoot, {
+        duration: motionTokens.presets.shake.durB,
+        easing: motionTokens.presets.shake.easing,
+        reduceMotion: ReduceMotion.System,
+      }),
+      withTiming(0, {
+        duration: motionTokens.presets.shake.durB,
+        easing: motionTokens.presets.shake.easing,
+        reduceMotion: ReduceMotion.System,
+      })
+    );
+  };
+
+  const nominalShakeAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: nominalShakeX.value }],
+  }));
   // Voice input state & refs
   const [isListening, setIsListening] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState('');
@@ -346,6 +386,7 @@ export default function RecordScreen() {
   // Save Transaction
   const handleSave = async () => {
     if (rawAmount <= 0) {
+      triggerNominalShake();
       setErrorText('Isi nominal lebih dari Rp0');
       return;
     }
@@ -449,7 +490,9 @@ export default function RecordScreen() {
           />
 
           {isListening || Boolean(voiceTranscript) || Boolean(voiceError) || Boolean(voiceSuccess) ? (
-            <View
+            <Animated.View
+              entering={FadeInDown.duration(200)}
+              exiting={FadeOutUp.duration(150)}
               style={[
                 styles.voiceStatusCard,
                 {
@@ -498,13 +541,13 @@ export default function RecordScreen() {
                   {voiceError}
                 </Text>
               ) : null}
-            </View>
+            </Animated.View>
           ) : null}
         </View>
         {/* Nominal Field */}
         <View style={styles.field}>
           <Text style={[styles.label, { color: colors.ink }]}>Nominal</Text>
-          <View style={[styles.moneyInputWrap, { borderBottomColor: colors.border }]}>
+          <Animated.View style={[styles.moneyInputWrap, { borderBottomColor: colors.border }, nominalShakeAnimatedStyle]}>
             <Text style={[styles.moneyPrefix, { color: colors.muted }]}>Rp</Text>
             <RNTextInput
               style={[styles.moneyInput, { color: colors.ink }]}
@@ -517,7 +560,7 @@ export default function RecordScreen() {
               accessibilityLabel="Nominal dalam rupiah"
               autoFocus={!isEditing}
             />
-          </View>
+          </Animated.View>
         </View>
 
         {/* Category Field */}
@@ -593,9 +636,13 @@ export default function RecordScreen() {
 
         {/* Error Text Banner */}
         {errorText ? (
-          <View style={[styles.errorBanner, { backgroundColor: colors.errorBg, borderColor: colors.errorBorder }]}>
+          <Animated.View
+            entering={FadeInDown.duration(200)}
+            exiting={FadeOutUp.duration(150)}
+            style={[styles.errorBanner, { backgroundColor: colors.errorBg, borderColor: colors.errorBorder }]}
+          >
             <Text style={[styles.errorBannerText, { color: colors.red }]}>{errorText}</Text>
-          </View>
+          </Animated.View>
         ) : null}
         <Button
           title={isEditing ? 'Perbarui transaksi' : 'Simpan transaksi'}

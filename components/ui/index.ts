@@ -1,5 +1,6 @@
 // Design tokens
 export { radii, spacing, fontFamilies, typography } from '@/lib/tokens';
+export { motionTokens } from '@/lib/motion';
 
 // Theme
 export { useTheme, ThemeProvider, lightColors, darkColors } from '@/lib/theme';

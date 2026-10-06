@@ -8,9 +8,17 @@ import {
   TextStyle,
   StyleProp,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  ReduceMotion,
+} from 'react-native-reanimated';
 import { Icon, Cancel01Icon } from '@/lib/icons';
 import { useTheme } from '@/lib/theme';
 import { radii, spacing, typography } from '@/lib/tokens';
+import { motionTokens } from '@/lib/motion';
+
 export interface ChipProps {
   label: string;
   active?: boolean;
@@ -22,6 +30,8 @@ export interface ChipProps {
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
 }
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function Chip({
   label,
@@ -36,6 +46,42 @@ export default function Chip({
 }: ChipProps) {
   const { colors } = useTheme();
   const isBadge = variant === 'badge';
+
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+
+  const handlePressIn = () => {
+    scale.value = withTiming(motionTokens.scale.pressSmall, {
+      duration: motionTokens.presets.press.pressInDuration,
+      easing: motionTokens.easing.smoothOut,
+      reduceMotion: ReduceMotion.System,
+    });
+    opacity.value = withTiming(0.9, {
+      duration: motionTokens.presets.press.pressInDuration,
+      easing: motionTokens.easing.smoothOut,
+      reduceMotion: ReduceMotion.System,
+    });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withTiming(1, {
+      duration: motionTokens.presets.press.pressOutDuration,
+      easing: motionTokens.easing.smoothOut,
+      reduceMotion: ReduceMotion.System,
+    });
+    opacity.value = withTiming(1, {
+      duration: motionTokens.presets.press.pressOutDuration,
+      easing: motionTokens.easing.smoothOut,
+      reduceMotion: ReduceMotion.System,
+    });
+  };
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+      opacity: opacity.value,
+    };
+  });
 
   const themedStyles = useMemo(
     () =>
@@ -90,7 +136,7 @@ export default function Chip({
           hitSlop={6}
           accessibilityRole="button"
           accessibilityLabel="Hapus filter"
-          style={styles.clearBtn}
+          style={({ pressed }) => [styles.clearBtn, pressed && styles.clearBtnPressed]}
         >
           <Icon
             icon={Cancel01Icon}
@@ -120,18 +166,20 @@ export default function Chip({
   }
 
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
-      style={({ pressed }) => [
+      style={[
         containerStyle,
-        pressed && styles.pressed,
+        animatedStyle,
         style,
       ]}
     >
       {containerContent}
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
@@ -170,15 +218,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  clearBtn: {
-    marginLeft: 2,
-  },
   rightIconWrap: {
     marginLeft: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pressed: {
-    opacity: 0.8,
+  clearBtn: {
+    marginLeft: 2,
+    padding: 2,
+    borderRadius: radii.full,
+  },
+  clearBtnPressed: {
+    opacity: 0.6,
+    transform: [{ scale: 0.9 }],
   },
 });
