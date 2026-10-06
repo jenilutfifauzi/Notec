@@ -42,7 +42,7 @@ type ListItem =
   | { kind: 'item'; key: string; tx: TransactionWithCategory };
 
 export default function HistoryScreen() {
-  const { colors } = useTheme();
+  const { mode, colors } = useTheme();
   const params = useLocalSearchParams<{
     year?: string;
     month?: string;
@@ -289,7 +289,13 @@ export default function HistoryScreen() {
       }
 
       return (
-        <Card style={styles.transactionCard}>
+        <Card
+          noShadow
+          style={[
+            styles.transactionCard,
+            { borderColor: mode === 'dark' ? colors.line : '#ededed' },
+          ]}
+        >
           <TransactionItem
             id={item.tx.id}
             categoryName={item.tx.categoryName}
@@ -307,7 +313,7 @@ export default function HistoryScreen() {
         </Card>
       );
     },
-    []
+    [mode, colors.line]
   );
 
   return (
@@ -607,6 +613,10 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     borderRadius: radii.lg,
     marginVertical: 3,
+    borderWidth: 1,
+    borderColor: '#ededed',
+    boxShadow: 'none',
+    elevation: 0,
   },
   centerLoading: {
     flex: 1,

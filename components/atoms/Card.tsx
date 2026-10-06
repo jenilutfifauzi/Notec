@@ -22,6 +22,7 @@ export interface CardProps {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   variant?: CardVariant;
+  noShadow?: boolean;
   onPress?: () => void;
   accessibilityLabel?: string;
 }
@@ -32,10 +33,11 @@ export default function Card({
   children,
   style,
   variant = 'default',
+  noShadow = false,
   onPress,
   accessibilityLabel,
 }: CardProps) {
-  const { colors, shadows } = useTheme();
+  const { mode, colors, shadows } = useTheme();
   const isMetric = variant === 'metric';
 
   const scale = useSharedValue(1);
@@ -80,12 +82,14 @@ export default function Card({
         base: {
           backgroundColor: colors.white,
           borderWidth: 1,
-          borderColor: colors.line,
+          borderColor: noShadow
+            ? (mode === 'dark' ? colors.line : '#ededed')
+            : colors.line,
           borderCurve: 'continuous',
-          ...shadows.card,
+          ...(noShadow ? { boxShadow: 'none', elevation: 0 } : shadows.card),
         },
       }),
-    [colors, shadows],
+    [mode, colors, shadows, noShadow],
   );
 
   const containerStyles = [

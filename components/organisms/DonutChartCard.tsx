@@ -106,7 +106,13 @@ export default function DonutChartCard({
       </View>
 
       {/* Card */}
-      <Card style={styles.card}>
+      <Card
+        noShadow
+        style={[
+          styles.card,
+          { borderColor: mode === 'dark' ? colors.line : '#ededed' },
+        ]}
+      >
         {!hasExpenses ? (
           <EmptyState message="Belum ada pengeluaran" minHeight={100} />
         ) : (
@@ -198,6 +204,10 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingHorizontal: 12,
     paddingBottom: 14,
+    borderWidth: 1,
+    borderColor: '#ededed',
+    boxShadow: 'none',
+    elevation: 0,
   },
   contentRow: {
     flexDirection: 'row',

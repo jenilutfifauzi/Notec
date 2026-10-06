@@ -149,7 +149,13 @@ export default function BarChartCard({
       </View>
 
       {/* Card */}
-      <Card style={styles.card}>
+      <Card
+        noShadow
+        style={[
+          styles.card,
+          { borderColor: mode === 'dark' ? colors.line : '#ededed' },
+        ]}
+      >
         {/* Top row in card: Per bulan & Badge */}
         <View style={styles.cardTopRow}>
           <Text style={[styles.perBulanText, { color: colors.ink }]}>Per bulan</Text>
@@ -229,6 +235,10 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 8,
     paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#ededed',
+    boxShadow: 'none',
+    elevation: 0,
   },
   cardTopRow: {
     flexDirection: 'row',

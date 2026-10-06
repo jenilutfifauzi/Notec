@@ -341,8 +341,12 @@ export default function BerandaScreen() {
         {/* Metric Cards (↙ Masuk & ↗ Keluar) */}
         <View style={styles.metricsRow}>
           <Card
+            noShadow
             variant="metric"
-            style={styles.metricCard}
+            style={[
+              styles.metricCard,
+              { borderColor: isDark ? colors.line : '#ededed' },
+            ]}
             onPress={() =>
               router.push({
                 pathname: '/history',
@@ -367,8 +371,12 @@ export default function BerandaScreen() {
           </Card>
 
           <Card
+            noShadow
             variant="metric"
-            style={styles.metricCard}
+            style={[
+              styles.metricCard,
+              { borderColor: isDark ? colors.line : '#ededed' },
+            ]}
             onPress={() =>
               router.push({
                 pathname: '/history',
@@ -429,7 +437,13 @@ export default function BerandaScreen() {
               </View>
 
               {recentList.length === 0 ? (
-                <Card style={styles.recentEmptyCard}>
+                <Card
+                  noShadow
+                  style={[
+                    styles.recentEmptyCard,
+                    { borderColor: isDark ? colors.line : '#ededed' },
+                  ]}
+                >
                   <EmptyState
                     message="Belum ada catatan. Tambah transaksi pertama."
                     action={{
@@ -640,6 +654,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 15,
     gap: 7,
+    borderWidth: 1,
+    borderColor: '#ededed',
+    boxShadow: 'none',
+    elevation: 0,
   },
   metricLabel: {
     fontFamily: fontFamilies.medium,
@@ -688,5 +706,9 @@ const styles = StyleSheet.create({
   recentEmptyCard: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#ededed',
+    boxShadow: 'none',
+    elevation: 0,
   },
 });
