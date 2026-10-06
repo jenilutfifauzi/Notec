@@ -38,7 +38,7 @@ export default function MonthPicker({
   hasCustomFilter,
   onClearCustomFilter,
 }: MonthPickerProps) {
-  const { colors } = useTheme();
+  const { mode, colors } = useTheme();
   const isHero = variant === 'hero';
 
   const date = new Date(year, month - 1, 1);
@@ -111,7 +111,7 @@ export default function MonthPicker({
           <Icon
             icon={ChevronLeftIcon}
             size={18}
-            color={colors.iconMuted}
+            color={mode === 'dark' ? '#AAAAAA' : colors.iconMuted}
           />
         </AnimatedPressable>
       ) : null}
@@ -121,6 +121,14 @@ export default function MonthPicker({
           onPress={onPressTitle}
           style={({ pressed }) => [
             styles.titleButton,
+            mode === 'dark' && {
+              backgroundColor: '#212121',
+              borderWidth: 1,
+              borderColor: '#3F3F3F',
+              borderRadius: radii.md,
+              paddingHorizontal: 10,
+              paddingVertical: 5,
+            },
             hasCustomFilter ? [styles.titleButtonActive, { backgroundColor: colors.primaryPale }] : null,
             pressed && styles.titleButtonPressed,
           ]}
@@ -214,7 +222,7 @@ export default function MonthPicker({
           <Icon
             icon={ChevronRightIcon}
             size={18}
-            color={colors.iconMuted}
+            color={mode === 'dark' ? '#AAAAAA' : colors.iconMuted}
           />
         </AnimatedPressable>
       ) : null}

@@ -1,5 +1,6 @@
 import { Tabs, router } from 'expo-router';
 import { View, StyleSheet, Pressable } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -15,12 +16,10 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 function CenterAddButton({
   onPress,
-  backgroundColor,
-  iconColor,
+  isDark,
 }: {
   onPress: () => void;
-  backgroundColor: string;
-  iconColor: string;
+  isDark: boolean;
 }) {
   const scale = useSharedValue(1);
 
@@ -45,20 +44,18 @@ function CenterAddButton({
       accessibilityLabel="Catat Transaksi"
       accessibilityRole="button"
     >
-      <View
-        style={[
-          styles.addButton,
-          {
-            backgroundColor,
-          },
-        ]}
+      <LinearGradient
+        colors={isDark ? ['#82a60d', '#bedb00'] : ['#5B9A3C', '#3D7A26']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.addButton}
       >
         <Icon
           icon={Add01Icon}
-          size={26}
-          color={iconColor}
+          size={24}
+          color={isDark ? '#212121' : '#FFFFFF'}
         />
-      </View>
+      </LinearGradient>
     </AnimatedPressable>
   );
 }
@@ -99,8 +96,7 @@ export default function TabLayout() {
           tabBarButton: () => (
             <CenterAddButton
               onPress={() => router.push('/record')}
-              backgroundColor={colors.primary}
-              iconColor={mode === 'dark' ? '#212121' : colors.white}
+              isDark={mode === 'dark'}
             />
           ),
         }}

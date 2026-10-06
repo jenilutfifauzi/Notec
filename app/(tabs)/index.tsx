@@ -14,6 +14,7 @@ import Animated, {
   FadeInDown,
   ReduceMotion,
 } from 'react-native-reanimated';
+import { Svg, Defs, RadialGradient, Stop, Rect } from 'react-native-svg';
 import { motionTokens } from '@/lib/motion';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -33,7 +34,7 @@ import {
   CategoryExpense,
   TransactionWithCategory,
 } from '../../db/queries/transactions';
-import MonthPicker from '@/components/molecules/MonthPicker';
+import DateFilterModal from '@/components/organisms/DateFilterModal';
 import TransactionItem from '@/components/molecules/TransactionItem';
 import BarChartCard from '@/components/organisms/BarChartCard';
 import DonutChartCard from '@/components/organisms/DonutChartCard';
@@ -41,15 +42,19 @@ import { formatRupiah } from '../../lib/format';
 import {
   radii,
   spacing,
-  typography,
   fontFamilies,
   Card,
   AppText,
-  SectionHeader,
   EmptyState,
 } from '@/components/ui';
+import { heroCardGradient } from '@/lib/tokens';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+const MONTH_NAMES = [
+  'JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI',
+  'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER',
+];
 
 function ThemeToggleButton({
   mode,
@@ -84,7 +89,7 @@ function ThemeToggleButton({
       onPress={handlePress}
       onLongPress={onLongPress}
       onPressIn={() => {
-        scale.value = withTiming(motionTokens.presets.iconSwap.startScale, {
+        scale.value = withTiming(0.92, {
           duration: 100,
           easing: motionTokens.easing.inOut,
           reduceMotion: ReduceMotion.System,
@@ -103,17 +108,20 @@ function ThemeToggleButton({
     >
       <Icon
         icon={mode === 'dark' ? Sun01Icon : Moon02Icon}
-        size={16}
+        size={15}
         color="#d9f77b"
       />
     </AnimatedPressable>
   );
 }
+
 export default function BerandaScreen() {
   const { mode, colors, toggleTheme } = useTheme();
+  const isDark = mode === 'dark';
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth() + 1);
+  const [isMonthPickerVisible, setIsMonthPickerVisible] = useState(false);
 
   const [summary, setSummary] = useState<MonthSummary>({
     income: 0,
@@ -124,6 +132,26 @@ export default function BerandaScreen() {
   const [categoryExpenses, setCategoryExpenses] = useState<CategoryExpense[]>([]);
   const [recentList, setRecentList] = useState<TransactionWithCategory[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Reanimated scale for month pill
+  const monthPillScale = useSharedValue(1);
+  const monthPillAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: monthPillScale.value }],
+  }));
+
+  const handleMonthPillPressIn = () => {
+    monthPillScale.value = withTiming(0.95, {
+      duration: 100,
+      easing: motionTokens.easing.smoothOut,
+    });
+  };
+
+  const handleMonthPillPressOut = () => {
+    monthPillScale.value = withTiming(1, {
+      duration: 150,
+      easing: motionTokens.easing.smoothOut,
+    });
+  };
 
   // Live query trigger: updates whenever any transaction changes in db
   const { data: liveTransactions } = useLiveQuery(
@@ -154,11 +182,6 @@ export default function BerandaScreen() {
     loadData();
   }, [loadData, liveTransactions]);
 
-  const handleMonthChange = (year: number, month: number) => {
-    setSelectedYear(year);
-    setSelectedMonth(month);
-  };
-
   const handleBarMonthPress = (year: number, month: number) => {
     router.push({
       pathname: '/history',
@@ -182,102 +205,156 @@ export default function BerandaScreen() {
     });
   };
 
+  const monthName = MONTH_NAMES[selectedMonth - 1] || 'BULAN';
+  const monthBadgeText = selectedYear !== now.getFullYear() ? `${monthName} ${selectedYear}` : monthName;
+
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.bg }]}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
-      {/* Hero Header with Stacked Card Layers */}
-      <View style={styles.heroWrapper}>
-        {/* Hero Stacked Card Layers (Layered behind Hero) */}
-        <View
-          style={[
-            styles.heroStack3,
-            {
-              backgroundColor: mode === 'dark' ? '#193526' : colors.heroStack3,
-              borderColor: mode === 'dark' ? '#28442e' : 'transparent',
-            },
-          ]}
-        />
-        <View
-          style={[
-            styles.heroStack2,
-            {
-              backgroundColor: mode === 'dark' ? '#24452d' : colors.heroStack2,
-              borderColor: mode === 'dark' ? '#35532c' : 'transparent',
-            },
-          ]}
-        />
-        <View
-          style={[
-            styles.heroStack1,
-            {
-              backgroundColor: mode === 'dark' ? '#396328' : colors.heroStack1,
-              borderColor: mode === 'dark' ? '#4a6e30' : 'transparent',
-            },
-          ]}
-        />
+      {/* Ambient Glow Hero Header (FRAME DASHBOARD NEW) */}
+      <View
+        style={[
+          styles.heroSection,
+          {
+            backgroundColor: isDark ? '#030501' : colors.bg,
+          },
+        ]}
+      >
+        {isDark && (
+          <Svg
+            style={StyleSheet.absoluteFill}
+            width="100%"
+            height="100%"
+            pointerEvents="none"
+          >
+            <Defs>
+              <RadialGradient id="glowChampagne" cx="15%" cy="10%" r="60%">
+                <Stop offset="0%" stopColor="#DFFF00" stopOpacity="0.22" />
+                <Stop offset="100%" stopColor="#DFFF00" stopOpacity="0" />
+              </RadialGradient>
+              <RadialGradient id="glowGold" cx="85%" cy="15%" r="55%">
+                <Stop offset="0%" stopColor="#DFFF00" stopOpacity="0.19" />
+                <Stop offset="100%" stopColor="#DFFF00" stopOpacity="0" />
+              </RadialGradient>
+              <RadialGradient id="glowEmerald" cx="50%" cy="40%" r="65%">
+                <Stop offset="0%" stopColor="#2FEA70" stopOpacity="0.16" />
+                <Stop offset="100%" stopColor="#2FEA70" stopOpacity="0" />
+              </RadialGradient>
+            </Defs>
+            <Rect x="0" y="0" width="100%" height="100%" fill="url(#glowChampagne)" />
+            <Rect x="0" y="0" width="100%" height="100%" fill="url(#glowGold)" />
+            <Rect x="0" y="0" width="100%" height="100%" fill="url(#glowEmerald)" />
+          </Svg>
+        )}
 
-        {/* Green Nature Hero Header (Front) */}
-        <LinearGradient colors={['#d5f56a', '#8fc83a']} style={styles.hero}>
-          <SafeAreaView edges={['top']} style={styles.safeHeader}>
-            {/* Greeting & Actions */}
-            {/* Top Bar: Search Pill (Dynamic Island) & Theme Toggle */}
-            <View style={styles.heroTop}>
+        <SafeAreaView edges={['top']} style={styles.safeHero}>
+          {/* Header Row: Title, Subtitle, Month Badge & Actions */}
+          <View style={styles.headerTopRow}>
+            <View style={styles.headerTitleGroup}>
+              <Text style={[styles.dashboardTitle, { color: isDark ? '#F5F5F5' : '#183A27' }]}>
+                Dashboard
+              </Text>
+            </View>
+
+            <View style={styles.headerActions}>
               <AnimatedPressable
                 onPress={() => router.push('/history')}
-                style={({ pressed }: { pressed: boolean }) => [
-                  styles.searchPill,
-                  pressed && styles.searchPillPressed,
+                style={[
+                  styles.headerIconBtn,
+                  {
+                    backgroundColor: isDark ? '#21451f' : '#E7F0D9',
+                    borderColor: isDark ? '#c7f23a66' : '#B7D493',
+                  },
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="Cari catatan atau kategori"
+                accessibilityLabel="Cari catatan"
               >
-                <Icon icon={Search01Icon} size={14} color="#c7f23a" />
-                <Text style={styles.searchPillText}>Cari...</Text>
+                <Icon icon={Search01Icon} size={15} color={isDark ? '#d9f77b' : '#183A27'} />
               </AnimatedPressable>
+
               <ThemeToggleButton
                 mode={mode}
                 toggleTheme={toggleTheme}
                 onLongPress={() => router.push('/settings')}
               />
             </View>
+          </View>
 
-            {/* Greeting: Dashboard */}
-            <View style={styles.heroTitleGroup}>
-              <Text style={styles.heroGreeting}>Dashboard</Text>
-              <Text style={styles.heroSub}>Ringkasan keuanganmu</Text>
-            </View>
-
-            {/* Balance */}
-            <View style={styles.balanceSection}>
-              <Text style={styles.balanceLabel}>Saldo bulan ini</Text>
+          {/* Floating Hero Card & Saku Pengeluaran Berlapis */}
+          <View style={styles.floatingCardContainer}>
+            {/* Primary Balance Card */}
+            <LinearGradient
+              colors={heroCardGradient}
+              start={{ x: 0.1, y: 0.1 }}
+              end={{ x: 1.0, y: 1.0 }}
+              style={styles.heroBalanceCard}
+            >
+              <Text style={styles.heroBalanceLabel}>Saldo bulan ini</Text>
               <Animated.Text
                 key={`bal-${summary.balance}`}
                 entering={FadeInDown.duration(motionTokens.presets.digit.duration)}
-                style={styles.balanceAmount}
+                style={styles.heroBalanceAmount}
               >
                 {formatRupiah(summary.balance)}
               </Animated.Text>
+              {/* Handle Bar Horizontal */}
+              <View style={styles.heroCardHandle} />
+            </LinearGradient>
 
-              {/* Month Picker in Hero */}
-              <MonthPicker
-                year={selectedYear}
-                month={selectedMonth}
-                onChange={handleMonthChange}
-                variant="hero"
-              />
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
+            {/* Connected Expense Pocket */}
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: '/history',
+                  params: {
+                    year: String(selectedYear),
+                    month: String(selectedMonth),
+                    type: 'expense',
+                  },
+                })
+              }
+              style={({ pressed }) => [
+                styles.heroExpensePocket,
+                pressed && { opacity: 0.93 },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={`Pengeluaran ${formatRupiah(summary.expense)}`}
+            >
+              <Text style={styles.expensePocketLabel}>Pengeluaran</Text>
+              <Animated.Text
+                key={`exp-${summary.expense}`}
+                entering={FadeInDown.duration(motionTokens.duration.fast)}
+                style={styles.expensePocketAmount}
+              >
+                {formatRupiah(summary.expense)}
+              </Animated.Text>
+            </Pressable>
+          </View>
+        </SafeAreaView>
       </View>
 
       {/* Main Content Area */}
       <View style={styles.content}>
-        {/* Metric Cards (Overlapping Hero) */}
+        {/* Metric Cards (↙ Masuk & ↗ Keluar) */}
         <View style={styles.metricsRow}>
-          <Card variant="metric" style={styles.metricCard}>
+          <Card
+            variant="metric"
+            style={styles.metricCard}
+            onPress={() =>
+              router.push({
+                pathname: '/history',
+                params: {
+                  year: String(selectedYear),
+                  month: String(selectedMonth),
+                  type: 'income',
+                },
+              })
+            }
+            accessibilityLabel={`Pemasukan ${formatRupiah(summary.income)}`}
+          >
             <Text style={[styles.metricLabel, { color: colors.muted }]}>↙ Masuk</Text>
             <Animated.View
               key={`inc-${summary.income}`}
@@ -288,7 +365,22 @@ export default function BerandaScreen() {
               </AppText>
             </Animated.View>
           </Card>
-          <Card variant="metric" style={styles.metricCard}>
+
+          <Card
+            variant="metric"
+            style={styles.metricCard}
+            onPress={() =>
+              router.push({
+                pathname: '/history',
+                params: {
+                  year: String(selectedYear),
+                  month: String(selectedMonth),
+                  type: 'expense',
+                },
+              })
+            }
+            accessibilityLabel={`Pengeluaran ${formatRupiah(summary.expense)}`}
+          >
             <Text style={[styles.metricLabel, { color: colors.muted }]}>↗ Keluar</Text>
             <Animated.View
               key={`exp-${summary.expense}`}
@@ -300,6 +392,7 @@ export default function BerandaScreen() {
             </Animated.View>
           </Card>
         </View>
+
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color={colors.primary} />
@@ -370,6 +463,27 @@ export default function BerandaScreen() {
           </>
         )}
       </View>
+
+      {/* Date Filter Modal for Month Selection */}
+      <DateFilterModal
+        visible={isMonthPickerVisible}
+        onClose={() => setIsMonthPickerVisible(false)}
+        year={selectedYear}
+        month={selectedMonth}
+        dateFrom={null}
+        dateTo={null}
+        onApply={(sel) => {
+          setSelectedYear(sel.year);
+          setSelectedMonth(sel.month);
+          setIsMonthPickerVisible(false);
+        }}
+        onReset={() => {
+          const d = new Date();
+          setSelectedYear(d.getFullYear());
+          setSelectedMonth(d.getMonth() + 1);
+          setIsMonthPickerVisible(false);
+        }}
+      />
     </ScrollView>
   );
 }
@@ -381,48 +495,63 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: spacing['24'],
   },
-  heroWrapper: {
+  heroSection: {
     position: 'relative',
-    marginBottom: 20,
-    overflow: 'visible',
+    overflow: 'hidden',
+    paddingBottom: 18,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
-  hero: {
-    borderBottomLeftRadius: 22,
-    borderBottomRightRadius: 22,
-    borderCurve: 'continuous',
-    paddingHorizontal: 18,
-    paddingBottom: 22,
-    zIndex: 4,
-  },
-  safeHeader: {
+  safeHero: {
     paddingTop: spacing['3'],
+    paddingHorizontal: 16,
   },
-  heroTop: {
+  headerTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 16,
+    paddingTop: 4,
   },
-  searchPill: {
+  headerTitleGroup: {
+    gap: 4,
+  },
+  dashboardTitle: {
+    fontFamily: fontFamilies.bold,
+    fontSize: 22,
+    letterSpacing: -0.3,
+    lineHeight: 26,
+  },
+  dashboardSub: {
+    fontFamily: fontFamilies.medium,
+    fontSize: 11,
+    lineHeight: 14,
+  },
+  monthBadgePill: {
+    alignSelf: 'flex-start',
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginTop: 4,
+  },
+  monthBadgeText: {
+    fontFamily: fontFamilies.semiBold,
+    fontSize: 9,
+    letterSpacing: 0.5,
+  },
+  headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#063b1b',
-    borderRadius: 16,
+    gap: 8,
+  },
+  headerIconBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#d9f77b66',
-    paddingHorizontal: 12,
-    height: 34,
-    gap: 6,
-  },
-  searchPillPressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.96 }],
-  },
-  searchPillText: {
-    color: '#d9f77b',
-    fontFamily: fontFamilies.semiBold,
-    fontSize: 12,
-    letterSpacing: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   themeButton: {
     width: 30,
@@ -435,79 +564,68 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroTitleGroup: {
-    gap: 4,
-    marginBottom: 14,
+  floatingCardContainer: {
+    backgroundColor: '#BAC842',
+    borderRadius: 28,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+    marginTop: 4,
   },
-  heroGreeting: {
-    fontFamily: fontFamilies.bold,
-    fontSize: 22,
-    letterSpacing: -0.3,
-    color: '#063b1b',
-    lineHeight: 26,
+  heroBalanceCard: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    borderCurve: 'continuous',
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    paddingBottom: 6,
   },
-  heroSub: {
-    fontFamily: fontFamilies.medium,
-    fontSize: 13,
-    color: '#063b1b',
-    lineHeight: 16,
+  heroBalanceLabel: {
+    fontFamily: fontFamilies.semiBold,
+    fontSize: 15,
+    color: '#111111',
+    lineHeight: 18,
   },
-  balanceSection: {
-    gap: 5,
-  },
-  balanceLabel: {
-    fontFamily: fontFamilies.medium,
-    fontSize: 13,
-    color: '#063b1b',
-    lineHeight: 16,
-  },
-  balanceAmount: {
+  heroBalanceAmount: {
     fontFamily: fontFamilies.extraBold,
     fontSize: 34,
-    letterSpacing: -0.4,
-    color: '#063b1b',
+    letterSpacing: -0.8,
+    color: '#111111',
     lineHeight: 40,
-    marginVertical: 4,
+    marginTop: 14,
+    marginBottom: 16,
     fontVariant: ['tabular-nums'],
   },
-  heroStack1: {
-    position: 'absolute',
-    left: 4,
-    right: 4,
-    bottom: -6,
-    height: 48,
-    borderBottomLeftRadius: 22,
-    borderBottomRightRadius: 22,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderTopWidth: 0,
-    zIndex: 3,
+  heroCardHandle: {
+    width: 34,
+    height: 4,
+    borderRadius: 4,
+    backgroundColor: '#BAC842',
+    alignSelf: 'center',
+    marginBottom: 6,
   },
-  heroStack2: {
-    position: 'absolute',
-    left: 8,
-    right: 8,
-    bottom: -12,
-    height: 48,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderTopWidth: 0,
-    zIndex: 2,
+  heroExpensePocket: {
+    backgroundColor: '#BAC842',
+    paddingHorizontal: 24,
+    paddingTop: 9,
+    paddingBottom: 11,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  heroStack3: {
-    position: 'absolute',
-    left: 12,
-    right: 12,
-    bottom: -20,
-    height: 48,
-    borderBottomLeftRadius: 18,
-    borderBottomRightRadius: 18,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderTopWidth: 0,
-    zIndex: 1,
+  expensePocketLabel: {
+    fontFamily: fontFamilies.medium,
+    fontSize: 15,
+    color: '#111111',
+    lineHeight: 18,
+  },
+  expensePocketAmount: {
+    fontFamily: fontFamilies.bold,
+    fontSize: 16,
+    color: '#111111',
+    lineHeight: 18,
+    fontVariant: ['tabular-nums'],
   },
   content: {
     paddingHorizontal: 16,
@@ -515,7 +633,7 @@ const styles = StyleSheet.create({
   metricsRow: {
     flexDirection: 'row',
     gap: 9,
-    marginTop: 18,
+    marginTop: 14,
   },
   metricCard: {
     flex: 1,
@@ -525,14 +643,14 @@ const styles = StyleSheet.create({
   },
   metricLabel: {
     fontFamily: fontFamilies.medium,
-    fontSize: 12,
-    lineHeight: 15,
+    fontSize: 10,
+    lineHeight: 13,
   },
   metricValue: {
     fontFamily: fontFamilies.bold,
-    fontSize: 17,
+    fontSize: 15,
     letterSpacing: -0.2,
-    lineHeight: 21,
+    lineHeight: 19,
     fontVariant: ['tabular-nums'],
   },
   loadingContainer: {

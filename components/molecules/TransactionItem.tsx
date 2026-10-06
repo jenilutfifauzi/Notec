@@ -69,7 +69,7 @@ const TransactionItem = memo(function TransactionItem({
   const title = note ? note : categoryName;
   const isToday = transactionDate === getTodayDateString();
   const dateDisplay = isToday ? 'Hari ini' : formatDateShort(transactionDate);
-  const subtitle = `${categoryName} · ${dateDisplay}`;
+  const subtitle = `${categoryName} • ${dateDisplay}`;
   const formattedAmount = `${isExpense ? '−' : '+'}${formatRupiah(amountIdr)}`;
   const iconDef = getCategoryIcon(categoryName);
 
@@ -78,12 +78,12 @@ const TransactionItem = memo(function TransactionItem({
 
   const handlePressIn = () => {
     scale.value = withTiming(0.985, {
-      duration: motionTokens.presets.press.pressInDuration,
+      duration: 100,
       easing: motionTokens.easing.smoothOut,
       reduceMotion: ReduceMotion.System,
     });
     opacity.value = withTiming(0.88, {
-      duration: motionTokens.presets.press.pressInDuration,
+      duration: 100,
       easing: motionTokens.easing.smoothOut,
       reduceMotion: ReduceMotion.System,
     });
@@ -91,12 +91,12 @@ const TransactionItem = memo(function TransactionItem({
 
   const handlePressOut = () => {
     scale.value = withTiming(1, {
-      duration: motionTokens.presets.press.pressOutDuration,
+      duration: 140,
       easing: motionTokens.easing.smoothOut,
       reduceMotion: ReduceMotion.System,
     });
     opacity.value = withTiming(1, {
-      duration: motionTokens.presets.press.pressOutDuration,
+      duration: 140,
       easing: motionTokens.easing.smoothOut,
       reduceMotion: ReduceMotion.System,
     });
@@ -124,18 +124,19 @@ const TransactionItem = memo(function TransactionItem({
         style={[
           styles.iconContainer,
           {
-            backgroundColor: categoryColor
-              ? `${categoryColor}22`
-              : mode === 'dark'
-              ? '#2a2a2a'
-              : colors.surfaceControl,
+            backgroundColor:
+              mode === 'dark'
+                ? '#303030'
+                : categoryColor
+                ? `${categoryColor}22`
+                : colors.surfaceControl,
           },
         ]}
       >
         <Icon
           icon={iconDef}
-          size={18}
-          color={categoryColor || (mode === 'dark' ? colors.white : colors.ink)}
+          size={16}
+          color={categoryColor || (mode === 'dark' ? colors.primary : colors.ink)}
           strokeWidth={1.8}
         />
       </View>
@@ -167,8 +168,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   iconContainer: {
-    width: 38,
-    height: 38,
+    width: 34,
+    height: 34,
     borderRadius: 10,
     borderCurve: 'continuous',
     alignItems: 'center',
@@ -180,8 +181,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: fontFamilies.bold,
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 17,
     marginBottom: 2,
   },
   subtitle: {
@@ -191,8 +192,9 @@ const styles = StyleSheet.create({
   },
   amount: {
     fontFamily: fontFamilies.bold,
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 17,
     textAlign: 'right',
+    fontVariant: ['tabular-nums'],
   },
 });

@@ -109,7 +109,7 @@ const CategoryRow = memo(function CategoryRow({
 });
 
 export default function CategoriesScreen() {
-  const { colors } = useTheme();
+  const { mode, colors } = useTheme();
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [activeList, setActiveList] = useState<Category[]>([]);
   const [archivedList, setArchivedList] = useState<Category[]>([]);
@@ -257,7 +257,7 @@ export default function CategoriesScreen() {
             accessibilityLabel="Tambah Kategori"
             accessibilityRole="button"
           >
-            <Icon icon={Add01Icon} size={26} color="#063b1b" />
+            <Icon icon={Add01Icon} size={26} color={mode === 'dark' ? colors.primary : '#063b1b'} />
           </Pressable>
         }
       />
@@ -315,8 +315,15 @@ export default function CategoriesScreen() {
           title="Tambah kategori"
           onPress={handleOpenAdd}
           variant="dashed"
-          icon={<Icon icon={Add01Icon} size={18} color={colors.primary} />}
-          style={styles.addBtn}
+          icon={<Icon icon={Add01Icon} size={18} color={mode === 'dark' ? colors.ink : colors.primary} />}
+          style={[
+            styles.addBtn,
+            mode === 'dark' && {
+              borderColor: '#3F3F3F',
+              backgroundColor: '#212121',
+            },
+          ]}
+          textStyle={mode === 'dark' ? { color: '#F1F1F1' } : undefined}
         />
 
         {/* Tip Text Card */}

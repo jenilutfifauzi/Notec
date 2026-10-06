@@ -79,6 +79,14 @@ export interface ThemeColors {
   heroStack1: string;
   heroStack2: string;
   heroStack3: string;
+
+  heroBg: string;
+  heroGlowChampagne: string;
+  heroGlowEmerald: string;
+  heroGlowGold: string;
+  heroPocketBg: string;
+  heroCardHandle: string;
+  heroSubText: string;
 }
 
 export interface ThemeShadows {
@@ -181,34 +189,42 @@ export const lightColors: ThemeColors = {
   heroStack1: '#B8D990',
   heroStack2: '#CBE4B3',
   heroStack3: '#DCEBCB',
+
+  heroBg: '#FFFDF8',
+  heroGlowChampagne: 'rgba(223, 255, 0, 0.1)',
+  heroGlowEmerald: 'rgba(47, 234, 112, 0.1)',
+  heroGlowGold: 'rgba(223, 255, 0, 0.1)',
+  heroPocketBg: '#B6C90F',
+  heroCardHandle: '#B6C90F',
+  heroSubText: '#063B1B',
 };
 
 export const darkColors: ThemeColors = {
-  primary: '#c7f23a',           // lime-green accent in dark mode
-  primaryDeep: '#a8d62a',
+  primary: '#C7F23A',           // lime-green accent in dark mode
+  primaryDeep: '#78B52C',
   primaryPale: '#303030',       // dark icon background
-  primaryBarInactive: '#5B9A3C', // bar inactive in dark
+  primaryBarInactive: '#F1F1F1', // inactive bar off-white in new design
   pale: '#303030',
-  barInactive: '#5B9A3C',
+  barInactive: '#AAAAAA',
 
-  bg: '#212121',                // main dark background
-  white: '#212121',             // card backgrounds in dark
-  surfaceInput: '#272727',      // dark input fields
-  surfaceControl: '#292929',    // segmented control track
-  surfaceTip: '#242424',        // tip card background
-  surfaceDashed: '#272727',
+  bg: '#0F0F0F',                // main dark background canvas (#0F0F0F)
+  white: '#212121',             // card surface in dark (#212121)
+  surfaceInput: '#212121',      // dark input fields with border #3F3F3F
+  surfaceControl: '#303030',    // segmented control track & surface raised
+  surfaceTip: '#212121',        // tip card background
+  surfaceDashed: '#212121',
 
-  ink: '#f1f1f1',               // primary text
-  muted: '#aaaaaa',             // secondary text
-  subtle: '#aaaaaa',
-  placeholder: '#777777',       // same as light
+  ink: '#F1F1F1',               // primary text
+  muted: '#AAAAAA',             // secondary text
+  subtle: '#AAAAAA',
+  placeholder: '#777777',
 
-  line: '#2d2d2d',              // refined hairline borders in dark
-  border: '#2d2d2d',
-  borderSecondary: '#2d2d2d',
-  borderInput: '#353535',
+  line: '#3F3F3F',              // refined borders in dark
+  border: '#3F3F3F',
+  borderSecondary: '#3F3F3F',
+  borderInput: '#3F3F3F',
   borderDashed: '#666666',
-  borderHighlight: '#c7f23a66',
+  borderHighlight: '#C7F23A66',
   dragHandle: '#666666',
 
   green: '#14996b',
@@ -225,40 +241,48 @@ export const darkColors: ThemeColors = {
   overlayDark: 'rgba(0, 0, 0, 0.7)',
 
   toastBg: '#303030',
-  toastAction: '#c7f23a',
+  toastAction: '#C7F23A',
 
-  heroSubtitle: '#063b1b',      // same — on gradient hero
-  heroBalanceLabel: '#063b1b',
-  heroIconBorder: '#c7f23a66',
+  heroSubtitle: '#DFFF00',
+  heroBalanceLabel: '#111111',
+  heroIconBorder: '#C7F23A66',
   heroIconBg: '#21451f',
 
-  chevron: '#aaaaaa',
-  iconMuted: '#aaaaaa',
-  sectionHeader: '#aaaaaa',
+  chevron: '#AAAAAA',
+  iconMuted: '#AAAAAA',
+  sectionHeader: '#AAAAAA',
 
   tabBarBg: '#212121',
 
-  searchBg: '#272727',
-  searchBorder: '#323232',
+  searchBg: '#212121',
+  searchBorder: '#3F3F3F',
 
   segmentActiveBg: '#212121',
 
-  chipActiveBg: '#c7f23a',
+  chipActiveBg: '#C7F23A',
   chipActiveText: '#212121',
   chipInactiveBg: '#212121',
-  chipInactiveText: '#aaaaaa',
-  chipInactiveBorder: '#323232',
+  chipInactiveText: '#AAAAAA',
+  chipInactiveBorder: '#3F3F3F',
 
-  buttonPrimaryBg: '#c7f23a',
+  buttonPrimaryBg: '#C7F23A',
   buttonPrimaryText: '#212121',
 
   transactionIconBg: '#303030',
-  transactionIconColor: '#c7f23a',
-  transactionIconIncomeColor: '#c7f23a',
+  transactionIconColor: '#C7F23A',
+  transactionIconIncomeColor: '#C7F23A',
 
   heroStack1: '#396328',
   heroStack2: '#24452d',
   heroStack3: '#193526',
+
+  heroBg: '#030501',
+  heroGlowChampagne: '#DFFF0038',
+  heroGlowEmerald: '#2FEA702A',
+  heroGlowGold: '#DFFF0030',
+  heroPocketBg: '#B6C90F',
+  heroCardHandle: '#B6C90F',
+  heroSubText: '#DFFF00',
 };
 
 export const lightShadows: ThemeShadows = {
@@ -358,3 +382,5 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 export function useTheme(): ThemeContextValue {
   return useContext(ThemeContext);
 }
+
+export { heroCardGradient } from './tokens';

@@ -119,10 +119,11 @@ export default function SegmentedControl<T extends string>({
           styles.pill,
           {
             backgroundColor: colors.segmentActiveBg,
+            borderWidth: mode === 'dark' ? 1 : 0,
+            borderColor: colors.line,
             boxShadow: mode === 'dark' ? 'none' : '0 1px 3px rgba(220, 227, 239, 0.9)',
             elevation: mode === 'dark' ? 0 : 2,
           },
-          animatedPillStyle,
         ]}
       />
 

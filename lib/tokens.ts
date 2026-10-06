@@ -96,7 +96,18 @@ export const colors = {
   heroStack1: '#B8D990',
   heroStack2: '#CBE4B3',
   heroStack3: '#DCEBCB',
+
+  // Hero New
+  heroBg: '#030501',
+  heroGlowChampagne: '#DFFF0038',
+  heroGlowEmerald: '#2FEA702A',
+  heroGlowGold: '#DFFF0030',
+  heroPocketBg: '#B6C90F',
+  heroCardHandle: '#B6C90F',
+  heroSubText: '#DFFF00',
 };
+
+export const heroCardGradient = ['#AABD3F', '#E5FE52'] as const;
 
 export const radii = {
   xs: 6,

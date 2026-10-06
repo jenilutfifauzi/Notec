@@ -163,9 +163,9 @@ export default function BarChartCard({
               <Animated.Text
                 key={`${selectedData.year}-${selectedData.month}-${selectedData.total}`}
                 entering={FadeIn.duration(200)}
-                style={[styles.monthPillText, { color: colors.ink }]}
+                style={[styles.monthPillText, { color: mode === 'dark' ? '#F1F1F1' : colors.ink }]}
               >
-                {`${selectedData.label} · ${formatCompactRupiah(selectedData.total)}`}
+                {`${selectedData.label} • ${formatCompactRupiah(selectedData.total)}`}
               </Animated.Text>
             </View>
           ) : null}
@@ -180,8 +180,7 @@ export default function BarChartCard({
                 ? Math.max(Math.round((d.total / maxVal) * 80), 8)
                 : 4;
 
-            const inactiveColor = mode === 'dark' ? '#f1f1f1' : colors.primaryBarInactive;
-
+            const inactiveColor = mode === 'dark' ? '#F1F1F1' : colors.primaryBarInactive;
             return (
               <BarColumn
                 key={`${d.year}-${d.month}`}
@@ -213,8 +212,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: fontFamilies.bold,
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
   },
   badgeBtn: {
     paddingHorizontal: 8,
@@ -222,10 +221,11 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   badgeBtnText: {
-    fontFamily: fontFamilies.semiBold,
-    fontSize: 12,
+    fontFamily: fontFamilies.bold,
+    fontSize: 10,
   },
   card: {
+    borderRadius: 14,
     paddingTop: 16,
     paddingBottom: 8,
     paddingHorizontal: 12,
@@ -237,17 +237,17 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   perBulanText: {
-    fontFamily: fontFamilies.semiBold,
-    fontSize: 12,
+    fontFamily: fontFamilies.bold,
+    fontSize: 11,
   },
   monthPill: {
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingVertical: 4,
+    borderRadius: 20,
   },
   monthPillText: {
-    fontFamily: fontFamilies.semiBold,
-    fontSize: 12,
+    fontFamily: fontFamilies.bold,
+    fontSize: 9,
   },
   chartRow: {
     flexDirection: 'row',
@@ -264,9 +264,9 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   bar: {
-    width: 28,
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
+    width: 18,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
     borderCurve: 'continuous',
     marginBottom: 8,
   },

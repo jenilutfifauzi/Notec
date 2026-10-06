@@ -7,11 +7,17 @@ import {
   ViewStyle,
   StyleProp,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon, ArrowLeft01Icon } from '@/lib/icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/theme';
-import { spacing, typography } from '@/lib/tokens';
+import { spacing, fontFamilies, heroCardGradient } from '@/lib/tokens';
+import { motionTokens } from '@/lib/motion';
 
 export type ScreenHeaderVariant = 'primary' | 'transparent';
 
@@ -23,6 +29,52 @@ export interface ScreenHeaderProps {
   style?: StyleProp<ViewStyle>;
 }
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+function HeaderActionButton({
+  onPress,
+  children,
+  accessibilityLabel,
+}: {
+  onPress: () => void;
+  children: React.ReactNode;
+  accessibilityLabel: string;
+}) {
+  const scale = useSharedValue(1);
+
+  const handlePressIn = () => {
+    scale.value = withTiming(0.94, {
+      duration: motionTokens.presets.press.pressInDuration,
+      easing: motionTokens.easing.smoothOut,
+    });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withTiming(1, {
+      duration: motionTokens.presets.press.pressOutDuration,
+      easing: motionTokens.easing.smoothOut,
+    });
+  };
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      hitSlop={12}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      style={[styles.actionBtn, animatedStyle]}
+    >
+      {children}
+    </AnimatedPressable>
+  );
+}
+
 export default function ScreenHeader({
   title,
   onBack,
@@ -30,30 +82,34 @@ export default function ScreenHeader({
   variant = 'primary',
   style,
 }: ScreenHeaderProps) {
-  const { colors } = useTheme();
+  const { mode, colors } = useTheme();
   const isPrimary = variant === 'primary';
-  const textColor = isPrimary ? '#063b1b' : colors.ink;
-  const iconColor = isPrimary ? '#063b1b' : colors.ink;
+  const isDark = mode === 'dark';
+
+  const useDarkThemeHeader = isDark || !isPrimary;
+  const textColor = useDarkThemeHeader ? colors.ink : '#063b1b';
+  const iconColor = useDarkThemeHeader ? colors.ink : '#063b1b';
 
   const content = (
     <SafeAreaView edges={['top']}>
       <View style={styles.headerContent}>
         {onBack ? (
-          <Pressable
-            onPress={onBack}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel="Kembali"
-            style={styles.actionBtn}
-          >
+          <HeaderActionButton onPress={onBack} accessibilityLabel="Kembali">
             <Icon icon={ArrowLeft01Icon} size={22} color={iconColor} />
-          </Pressable>
+          </HeaderActionButton>
         ) : (
           <View style={styles.actionBtnPlaceholder} />
         )}
 
         <Text
-          style={[styles.title, { color: textColor }]}
+          style={[
+            styles.title,
+            {
+              color: textColor,
+              fontFamily: fontFamilies.bold,
+              fontSize: 18,
+            },
+          ]}
           numberOfLines={1}
         >
           {title}
@@ -68,23 +124,38 @@ export default function ScreenHeader({
     </SafeAreaView>
   );
 
-  if (isPrimary) {
+  if (isPrimary && !isDark) {
     return (
-      <LinearGradient colors={['#c7f23a', '#78b52c']} style={style}>
+      <LinearGradient
+        colors={heroCardGradient}
+        start={{ x: 0.1, y: 0.1 }}
+        end={{ x: 1.0, y: 1.0 }}
+        style={style}
+      >
         {content}
       </LinearGradient>
     );
   }
 
   return (
-    <View style={[styles.transparentSafe, style]}>
+    <View
+      style={[
+        styles.headerContainer,
+        {
+          backgroundColor: isDark ? colors.bg : 'transparent',
+          borderBottomWidth: isDark ? 1 : 0,
+          borderBottomColor: colors.line,
+        },
+        style,
+      ]}
+    >
       {content}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  transparentSafe: {
+  headerContainer: {
     backgroundColor: 'transparent',
   },
   headerContent: {
@@ -92,20 +163,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing['8'],
+    paddingHorizontal: spacing['4'],
   },
   actionBtn: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
   actionBtnPlaceholder: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
   },
   title: {
-    ...typography.title,
     flex: 1,
     textAlign: 'center',
   },

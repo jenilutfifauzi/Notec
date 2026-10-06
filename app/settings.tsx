@@ -45,7 +45,7 @@ import {
   Toast,
 } from '@/components/ui';
 export default function SettingsScreen() {
-  const { colors } = useTheme();
+  const { mode, colors } = useTheme();
   const [backupModalVisible, setBackupModalVisible] = useState(false);
   const [backupPassword, setBackupPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -274,8 +274,8 @@ export default function SettingsScreen() {
             onPress={() => router.push('/categories')}
             accessibilityRole="button"
           >
-            <View style={[styles.menuIconWrap, { backgroundColor: '#fef3c7' }]}>
-              <Icon icon={SaleTag01Icon} size={20} color="#d97706" />
+            <View style={[styles.menuIconWrap, { backgroundColor: mode === 'dark' ? '#352e18' : '#fef3c7' }]}>
+              <Icon icon={SaleTag01Icon} size={20} color={mode === 'dark' ? '#fbbf24' : '#d97706'} />
             </View>
             <View style={styles.menuTextWrap}>
               <Text style={[styles.menuTitle, { color: colors.ink }]}>Kelola kategori</Text>
@@ -338,11 +338,11 @@ export default function SettingsScreen() {
             onPress={() => setShowDeleteConfirm(true)}
             accessibilityRole="button"
           >
-            <View style={[styles.menuIconWrap, { backgroundColor: '#fee2e2' }]}>
-              <Icon icon={Delete01Icon} size={20} color={colors.red} />
+            <View style={[styles.menuIconWrap, { backgroundColor: mode === 'dark' ? '#5C2525' : '#fee2e2' }]}>
+              <Icon icon={Delete01Icon} size={20} color={mode === 'dark' ? '#FF6B6B' : colors.red} />
             </View>
             <View style={styles.menuTextWrap}>
-              <Text style={[styles.menuTitle, styles.destructiveText, { color: colors.red }]}>Hapus semua data</Text>
+              <Text style={[styles.menuTitle, styles.destructiveText, { color: mode === 'dark' ? '#FF6B6B' : colors.red }]}>Hapus semua data</Text>
               <Text style={[styles.menuSubtitle, { color: colors.muted }]}>Hapus semua transaksi dan atur ulang kategori</Text>
             </View>
             <Icon icon={ChevronRightIcon} size={18} color={colors.chevron} />
