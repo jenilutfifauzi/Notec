@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
 import { useEffect, useState } from 'react';
 import { db, getDbInitError } from '../db/client';
@@ -49,9 +50,11 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => voi
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider>
-        <RootLayoutInner />
-      </ThemeProvider>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <RootLayoutInner />
+        </ThemeProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

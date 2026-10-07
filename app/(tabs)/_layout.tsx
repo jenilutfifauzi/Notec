@@ -1,5 +1,6 @@
 import { Tabs, router } from 'expo-router';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { StyleSheet, Pressable, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -12,6 +13,7 @@ import { useTheme } from '@/lib/theme';
 import { fontFamilies } from '@/lib/tokens';
 import { motionTokens, springBounce } from '@/lib/motion';
 
+const isAndroid = Platform.OS === 'android';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 function CenterAddButton({
@@ -48,11 +50,18 @@ function CenterAddButton({
         colors={isDark ? ['#82a60d', '#bedb00'] : ['#5B9A3C', '#3D7A26']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.addButton}
+        style={[
+          styles.addButton,
+          {
+            boxShadow: isDark
+              ? '0 4px 12px rgba(0, 0, 0, 0.35)'
+              : '0 4px 12px rgba(61, 122, 38, 0.28)',
+          },
+        ]}
       >
         <Icon
           icon={Add01Icon}
-          size={24}
+          size={22}
           color={isDark ? '#212121' : '#FFFFFF'}
         />
       </LinearGradient>
@@ -62,21 +71,25 @@ function CenterAddButton({
 
 export default function TabLayout() {
   const { mode, colors } = useTheme();
-
+  const insets = useSafeAreaInsets();
+  const isDark = mode === 'dark';
+  const bottomInset = insets.bottom > 0 ? insets.bottom : 8;
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: [
-          styles.tabBar,
-          {
-            backgroundColor: colors.tabBarBg,
-            borderTopColor: colors.line,
-          },
-        ],
+        tabBarStyle: {
+          backgroundColor: colors.tabBarBg,
+          borderTopColor: colors.line,
+          borderTopWidth: 1,
+          height: 54 + bottomInset,
+          paddingBottom: bottomInset,
+          paddingTop: 6,
+        },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.barInactive,
         tabBarLabelStyle: styles.tabLabel,
+        tabBarItemStyle: styles.tabBarItem,
       }}
     >
       <Tabs.Screen
@@ -84,7 +97,7 @@ export default function TabLayout() {
         options={{
           title: 'Beranda',
           tabBarIcon: ({ color }) => (
-            <Icon icon={Home01Icon} size={19} color={color} />
+            <Icon icon={Home01Icon} size={22} color={color} />
           ),
         }}
       />
@@ -96,7 +109,7 @@ export default function TabLayout() {
           tabBarButton: () => (
             <CenterAddButton
               onPress={() => router.push('/record')}
-              isDark={mode === 'dark'}
+              isDark={isDark}
             />
           ),
         }}
@@ -112,7 +125,7 @@ export default function TabLayout() {
         options={{
           title: 'Riwayat',
           tabBarIcon: ({ color }) => (
-            <Icon icon={TransactionHistoryIcon} size={20} strokeWidth={1.5} color={color} />
+            <Icon icon={TransactionHistoryIcon} size={22} strokeWidth={1.5} color={color} />
           ),
         }}
       />
@@ -121,16 +134,17 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  tabBar: {
-    borderTopWidth: 1,
-    height: 58,
-    paddingBottom: 6,
-    paddingTop: 5,
+  tabBarItem: {
+    paddingTop: 4,
+    paddingBottom: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   tabLabel: {
-    fontFamily: fontFamilies.bold,
-    fontSize: 9,
-    fontWeight: '700',
+    fontFamily: fontFamilies.semiBold,
+    fontSize: 10.5,
+    fontWeight: isAndroid ? undefined : ('600' as const),
+    includeFontPadding: false,
   },
   centerButtonContainer: {
     flex: 1,
@@ -138,13 +152,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addButton: {
-    width: 43,
-    height: 39,
-    borderRadius: 12,
+    width: 46,
+    height: 44,
+    borderRadius: 14,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 5px 11px rgba(36, 81, 191, 0.25)',
     elevation: 4,
   },
 });
